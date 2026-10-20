@@ -5,7 +5,9 @@
 
 class Microfone {
   constructor() {
-    this.mic = null;
+    this.stream = null;
+    this.ctx = null;
+    this.analisador = null;
     this.ativo = false;      // microfone a funcionar
     this.erro = false;       // permissão negada ou sem microfone
     this.pendente = false;   // à espera da permissão do browser
@@ -29,34 +31,63 @@ class Microfone {
   }
 
   // Tem de ser chamado num clique ou tecla (o browser exige gesto do utilizador)
+  // Usa a Web Audio API diretamente: a p5.sound 2.x já não aceita callbacks
+  // no AudioIn.start() e o getLevel() foi substituído.
   iniciar() {
     if (this.ativo || this.erro || this.pendente) return;
     this.pendente = true;
 
-    if (typeof userStartAudio === 'function') userStartAudio();
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      this.pendente = false;
+      this.erro = true;
+      console.warn('Microfone: getUserMedia indisponível (usa localhost ou https)');
+      return;
+    }
 
-    this.mic = new p5.AudioIn();
-    this.mic.start(
-      () => {
+    navigator.mediaDevices
+      .getUserMedia({
+        audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
+      })
+      .then((stream) => {
+        this.stream = stream;
+        this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+        this.ctx.resume();
+        const fonte = this.ctx.createMediaStreamSource(stream);
+        this.analisador = this.ctx.createAnalyser();
+        this.analisador.fftSize = 1024;
+        this.amostrasAudio = new Float32Array(this.analisador.fftSize);
+        fonte.connect(this.analisador);
+
         this.pendente = false;
         this.ativo = true;
         this.calibrando = true;
         this.inicioCalibracao = millis();
         this.somaRuido = 0;
         this.amostras = 0;
-      },
-      () => {
+      })
+      .catch((e) => {
+        console.warn('Microfone: erro', e);
         this.pendente = false;
         this.erro = true;
-      }
-    );
+      });
+  }
+
+  // Volume atual (RMS, 0 a 1)
+  lerVolume() {
+    if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+    this.analisador.getFloatTimeDomainData(this.amostrasAudio);
+    let soma = 0;
+    for (let i = 0; i < this.amostrasAudio.length; i++) {
+      soma += this.amostrasAudio[i] * this.amostrasAudio[i];
+    }
+    return Math.sqrt(soma / this.amostrasAudio.length);
   }
 
   // Chamar em cada frame
   atualizar() {
     if (!this.ativo) return;
 
-    this.nivel = lerp(this.nivel, this.mic.getLevel(), 0.3);
+    this.nivel = lerp(this.nivel, this.lerVolume(), 0.3);
 
     if (this.calibrando) {
       this.somaRuido += this.nivel;

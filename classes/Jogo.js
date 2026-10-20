@@ -285,7 +285,52 @@ class Jogo {
     fill(40);
     text('(jogo em construção - ENTER termina; ESPAÇO faz chover)', width / 2, height / 2 + 120);
 
+    this.desenharMedidorVoz();
     this.desenharAvisoMicrofone();
+  }
+
+  // Medidor de voz vertical com os limites mínimo e máximo (histerese)
+  desenharMedidorVoz() {
+    const mic = this.microfone;
+    if (!mic.ativo) return;
+
+    const x = 735, y = 120, w = 30, h = 260;
+    const escala = max(0.15, mic.limiteMax * 2.5);   // volume que enche o medidor
+    const paraY = (v) => y + h - constrain(v / escala, 0, 1) * h;
+
+    noStroke();
+    textAlign(CENTER, CENTER);
+    textSize(13);
+    fill(0);
+    text('VOZ', x + w / 2, y - 14);
+
+    // Fundo e moldura
+    fill(30, 40, 60);
+    rect(x, y, w, h);
+
+    // Nível atual (laranja quando a histerese está ativa = a chover)
+    fill(mic.aFalar ? color(255, 160, 40) : color(90, 170, 240));
+    const topo = paraY(mic.nivel);
+    rect(x, topo, w, y + h - topo);
+
+    // Linhas dos limites
+    fill(255, 80, 80);
+    rect(x - 6, paraY(mic.limiteMax) - 1, w + 12, 3);
+    fill(120, 255, 140);
+    rect(x - 6, paraY(mic.limiteMin) - 1, w + 12, 3);
+
+    textAlign(RIGHT, CENTER);
+    textSize(11);
+    fill(180, 30, 30);
+    text('máx', x - 10, paraY(mic.limiteMax));
+    fill(20, 120, 40);
+    text('mín', x - 10, paraY(mic.limiteMin));
+
+    noFill();
+    stroke(0);
+    strokeWeight(2);
+    rect(x, y, w, h);
+    noStroke();
   }
 
   // Mensagem enquanto o microfone pede permissão, calibra ou falha
