@@ -60,3 +60,32 @@ Aluno: Rodrigo Fernandes Malheiro (33103) · Sistemas Multimédia 2026-2027
 | Ferramenta | Finalidade | Resultado utilizado | Alterações/decisões do estudante |
 |---|---|---|---|
 | Claude (Anthropic) | Planear as tarefas por dia e gerar o script que cria labels, milestones e issues no GitHub | Plano de 6 dias, script `criar_issues.sh` e texto das 20 issues | Defini o prazo e os dias de trabalho, indiquei as alterações pedidas pelo docente, corri o script, criei o board e corrigi o texto de duas issues |
+
+## Sessão 3 – 20 de outubro de 2026
+
+**Objetivo:** Implementar os comportamentos e mecânicas base do balde e das gotas/nuvem, resolver o erro de carregamento do `Balde.js` e sincronizar as alterações com o repositório no GitHub.
+
+**Atividades realizadas:**
+- Diagnostiquei e corrigi o erro na consola (`Balde is not defined`), adicionando a tag `<script src="classes/Balde.js"></script>` no `index.html` antes do `Jogo.js`.
+- Implementei o movimento do balde a acompanhar a posição horizontal do rato (`mouseX`), com restrição de limites através da função `constrain()` para não sair do canvas.
+- Implementei 3 tipos de gotas (`agua`, `contaminada` e `bolha`) em `Gota.js`, com velocidades e comportamentos distintos.
+- Configurei a aleatoriedade e spawn das gotas a partir da nuvem e a remoção automática do ecrã (`splice`) para evitar acumulação na memória.
+- Resolvi a divergência de commits no Git (causada por um `git revert` anterior no ecrã remoto) alinhando o repositório local via `git fetch` e `git reset origin/main`, concluindo o `git push` das funcionalidades.
+
+**Problemas:**
+- A classe `Balde` não estava disponível no ecrã, gerando erro `null` / `undefined` na consola.
+- Rejeição do `git push` devido a históricos divergentes entre o `main` local e o `origin/main` do GitHub.
+
+**Solução:**
+- Incluí a referência ao ficheiro `Balde.js` no `index.html` no local correto (antes do script do jogo).
+- Executei `git fetch` e `git reset origin/main` para sincronizar a árvore de commits sem perder o código desenvolvido localmente, efetuando de seguida os commits estruturados e o `git push`.
+
+**Decisões:**
+- Manter o commit do Balde separado do das Gotas e Microfone para manter um histórico limpo e rastreável no Git.
+- Validar as tarefas no código antes de fechar e assinalar as checklists dos *issues* correspondentes no GitHub.
+
+### Utilização de IA (Sessão 3)
+
+| Ferramenta | Finalidade | Resultado utilizado | Alterações/decisões do estudante |
+|---|---|---|---|
+| Claude (Anthropic) | Diagnóstico do erro de consola, apoio na resolução de conflitos/divergência do Git e validação do cumprimento das tarefas dos *issues*. | Passos de depuração do `index.html` e sequência de comandos Git (`fetch`, `reset`, `commit`, `push`). | Identifiquei a falha de inclusão do script no HTML, executei a sequência de comandos para alinhar o Git e procedi à marcação/fecho das *issues* no GitHub. |
