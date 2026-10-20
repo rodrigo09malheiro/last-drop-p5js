@@ -32,9 +32,7 @@ class Nuvem {
     if (this.contador >= this.intervaloGotas) {
       this.contador = 0;
       const x = this.x + random(-this.largura / 3, this.largura / 3);
-      // Aleatoriedade controlada: ~80% água, ~20% contaminada
-      const tipo = random() < 0.2 ? 'contaminada' : 'agua';
-      return new Gota(x, this.y + 64, tipo);
+      return new Gota(x, this.y + 64);
     }
     return null;
   }
