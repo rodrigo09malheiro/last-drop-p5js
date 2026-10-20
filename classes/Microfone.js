@@ -1,6 +1,6 @@
 // Classe Microfone
 // Responsabilidade: ler o volume do microfone (p5.sound), fazer a
-// calibração inicial (~4 s) e aplicar a histerese entre o limite
+// calibração inicial (~3 s) e aplicar a histerese entre o limite
 // mínimo e o máximo.
 
 class Microfone {
@@ -17,7 +17,7 @@ class Microfone {
     this.aFalar = false;     // estado da histerese
 
     // Calibração do ruído ambiente
-    this.duracaoCalibracao = 4000; // ms
+    this.duracaoCalibracao = 3000; // ms
     this.inicioCalibracao = 0;
     this.somaRuido = 0;
     this.amostras = 0;
@@ -117,6 +117,11 @@ class Microfone {
   // True enquanto o jogo deve esperar (permissão ou calibração)
   aEspera() {
     return this.pendente || this.calibrando;
+  }
+
+  // Progresso da calibração (0 a 1)
+  progressoCalibracao() {
+    return constrain((millis() - this.inicioCalibracao) / this.duracaoCalibracao, 0, 1);
   }
 
   // Segundos que faltam para acabar a calibração

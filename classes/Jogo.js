@@ -351,6 +351,18 @@ class Jogo {
         textSize(40);
         fill(255, 220, 120);
         text(mic.segundosCalibracao(), width / 2, height / 2 + 34);
+
+        // Barra de progresso da calibração
+        const bx = width / 2 - 150, by = height / 2 + 75, bw = 300, bh = 22;
+        fill(30, 40, 60);
+        rect(bx, by, bw, bh);
+        fill(90, 170, 240);
+        rect(bx, by, bw * mic.progressoCalibracao(), bh);
+        noFill();
+        stroke(255);
+        strokeWeight(2);
+        rect(bx, by, bw, bh);
+        noStroke();
       }
     } else if (mic.erro) {
       textSize(14);
