@@ -23,6 +23,7 @@ class Jogo {
     this.litrosRecolhidos = 0;
     this.litrosDesperdicados = 0;
     this.vidas = 3;
+    this.motivoFim = '';     // 'tempo' ou 'vidas'
 
     // Botões do ecrã de início (x, y, largura, altura, texto)
     this.botoesDificuldade = [
@@ -36,6 +37,8 @@ class Jogo {
     this.microfone = new Microfone();
     this.nuvem = null;
     this.gotas = [];
+    this.balde = null;
+    this.proximaBolha = 0;   // ms até à próxima bolha de evaporação
   }
 
   // ---------- Controlo de estados ----------
@@ -47,10 +50,13 @@ class Jogo {
     this.litrosRecolhidos = 0;
     this.litrosDesperdicados = 0;
     this.vidas = 3;
+    this.motivoFim = '';
 
     this.microfone.iniciar();   // só calibra na primeira vez
     this.nuvem = new Nuvem();
+    this.balde = new Balde();
     this.gotas = [];
+    this.proximaBolha = millis() + 2500;
   }
 
   terminar() {
@@ -80,15 +86,40 @@ class Jogo {
       const novaGota = this.nuvem.atualizar(chovendo);
       if (novaGota) this.gotas.push(novaGota);
 
+      // Bolhas de evaporação sobem do chão em intervalos aleatórios
+      if (millis() >= this.proximaBolha) {
+        this.gotas.push(new Gota(random(40, width - 40), height - 30, 'bolha'));
+        this.proximaBolha = millis() + random(2000, 4000);
+      }
+
+      this.balde.atualizar();
+
       for (let i = this.gotas.length - 1; i >= 0; i--) {
-        this.gotas[i].atualizar();
-        if (this.gotas[i].foraDoEcra()) this.gotas.splice(i, 1);
+        const g = this.gotas[i];
+        g.atualizar();
+
+        if (this.balde.apanha(g)) {
+          if (g.eMa()) {
+            this.vidas--;            // contaminada ou bolha
+            this.balde.avisar();
+          } else {
+            this.litrosRecolhidos++; // água boa
+          }
+          this.gotas.splice(i, 1);
+        } else if (g.foraDoEcra()) {
+          this.gotas.splice(i, 1);
+        }
       }
 
       const decorrido = (millis() - this.tempoInicio) / 1000;
       this.tempoRestante = max(0, this.duracao - decorrido);
 
-      if (this.tempoRestante <= 0 || this.vidas <= 0) {
+      // Fim de jogo: vidas a zero ou tempo esgotado
+      if (this.vidas <= 0) {
+        this.motivoFim = 'vidas';
+        this.terminar();
+      } else if (this.tempoRestante <= 0) {
+        this.motivoFim = 'tempo';
         this.terminar();
       }
     }
@@ -269,24 +300,68 @@ class Jogo {
     // Gotas e nuvem (balde e reservatório entram mais tarde)
     for (const g of this.gotas) g.mostrar();
     this.nuvem.mostrar();
+    this.balde.mostrar();
 
-    // HUD provisório
-    textAlign(LEFT, TOP);
-    fill(0);
-    textSize(18);
-    text('Tempo: ' + ceil(this.tempoRestante) + ' s', 20, 20);
-    text('Recolhidos: ' + this.litrosRecolhidos + ' L', 20, 46);
-    text('Desperdiçados: ' + this.litrosDesperdicados + ' L', 20, 72);
-    text('Vidas: ' + this.vidas, 20, 98);
-    text('Dificuldade: ' + this.nomeDificuldade(), 20, 124);
+    this.desenharHUD();
 
     textAlign(CENTER, CENTER);
     textSize(16);
     fill(40);
-    text('(jogo em construção - ENTER termina; ESPAÇO faz chover)', width / 2, height / 2 + 120);
+    text('(ENTER termina; ESPAÇO faz chover)', width / 2, height / 2 + 120);
 
     this.desenharMedidorVoz();
     this.desenharAvisoMicrofone();
+  }
+
+  // HUD: tempo (centro), litros recolhidos (esquerda) e vidas (direita)
+  desenharHUD() {
+    noStroke();
+    fill(25, 18, 14, 200);
+    rect(0, 0, width, 40);
+    fill(255, 220, 120);
+    rect(0, 40, width, 3);
+
+    textSize(18);
+    textAlign(LEFT, CENTER);
+    fill(150, 210, 255);
+    this.desenharGotaHUD(14, 12);
+    fill(255);
+    text(this.litrosRecolhidos + ' L', 36, 21);
+
+    // Tempo (fica vermelho nos últimos 10 segundos)
+    textAlign(CENTER, CENTER);
+    const t = ceil(this.tempoRestante);
+    fill(t <= 10 ? color(255, 110, 110) : color(255));
+    text('Tempo: ' + t + ' s', width / 2, 21);
+
+    // Vidas em corações (cheios e vazios)
+    const total = 3;
+    for (let i = 0; i < total; i++) {
+      this.desenharCoracao(width - 30 - (total - 1 - i) * 30, 12, i < this.vidas);
+    }
+  }
+
+  desenharGotaHUD(x, y) {
+    noStroke();
+    fill(70, 150, 255);
+    rect(x + 4, y, 4, 4);
+    rect(x + 2, y + 4, 8, 6);
+    rect(x + 3, y + 10, 6, 3);
+  }
+
+  // Coração em pixel art (cheio = vermelho, vazio = cinzento escuro)
+  desenharCoracao(x, y, cheio) {
+    noStroke();
+    fill(cheio ? color(230, 60, 70) : color(70, 60, 65));
+    rect(x, y, 6, 6);
+    rect(x + 10, y, 6, 6);
+    rect(x - 2, y + 4, 20, 6);
+    rect(x, y + 10, 16, 4);
+    rect(x + 4, y + 14, 8, 3);
+    if (cheio) {
+      fill(255, 150, 150);
+      rect(x + 1, y + 1, 3, 3);
+    }
   }
 
   // Medidor de voz vertical com os limites mínimo e máximo (histerese)
@@ -379,13 +454,18 @@ class Jogo {
     textAlign(CENTER, CENTER);
     fill(255);
     textSize(44);
-    text('FIM DE JOGO', width / 2, 130);
+    text('FIM DE JOGO', width / 2, 110);
+
+    textSize(18);
+    fill(255, 220, 120);
+    text(this.motivoFim === 'vidas' ? 'Ficaste sem vidas!' : 'O tempo acabou!', width / 2, 160);
 
     textSize(20);
     fill(200, 225, 255);
     text('Dificuldade: ' + this.nomeDificuldade(), width / 2, 205);
     text('Litros recolhidos: ' + this.litrosRecolhidos, width / 2, 245);
     text('Litros desperdiçados: ' + this.litrosDesperdicados, width / 2, 277);
+    text('Vidas restantes: ' + this.vidas, width / 2, 309);
 
     // Dica real de poupança de água (próxima tarefa)
 
