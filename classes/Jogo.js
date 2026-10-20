@@ -31,6 +31,11 @@ class Jogo {
       { id: 'dificil', x: 490, y: 345, w: 140, h: 40, texto: 'DIFÍCIL' }
     ];
     this.botaoComecar = { x: 280, y: 415, w: 240, h: 54, texto: 'COMEÇAR' };
+
+    // Objetos do jogo
+    this.microfone = new Microfone();
+    this.nuvem = null;
+    this.gotas = [];
   }
 
   // ---------- Controlo de estados ----------
@@ -42,6 +47,10 @@ class Jogo {
     this.litrosRecolhidos = 0;
     this.litrosDesperdicados = 0;
     this.vidas = 3;
+
+    this.microfone.iniciar();   // só calibra na primeira vez
+    this.nuvem = new Nuvem();
+    this.gotas = [];
   }
 
   terminar() {
@@ -56,6 +65,26 @@ class Jogo {
 
   atualizar() {
     if (this.estado === 'execucao') {
+      this.microfone.atualizar();
+
+      // Durante a permissão/calibração do microfone o tempo não corre
+      if (this.microfone.aEspera()) {
+        this.tempoInicio = millis();
+        return;
+      }
+
+      // Chove quando a histerese do microfone está ativa
+      // (provisório: ESPAÇO também faz chover, para testar sem microfone)
+      const chovendo = this.microfone.aFalar || keyIsDown(32);
+
+      const novaGota = this.nuvem.atualizar(chovendo);
+      if (novaGota) this.gotas.push(novaGota);
+
+      for (let i = this.gotas.length - 1; i >= 0; i--) {
+        this.gotas[i].atualizar();
+        if (this.gotas[i].foraDoEcra()) this.gotas.splice(i, 1);
+      }
+
       const decorrido = (millis() - this.tempoInicio) / 1000;
       this.tempoRestante = max(0, this.duracao - decorrido);
 
@@ -237,7 +266,11 @@ class Jogo {
   desenharExecucao() {
     background(135, 195, 235);
 
-    // Placeholder: aqui vão nuvem, gotas, balde, reservatório e HUD
+    // Gotas e nuvem (balde e reservatório entram mais tarde)
+    for (const g of this.gotas) g.mostrar();
+    this.nuvem.mostrar();
+
+    // HUD provisório
     textAlign(LEFT, TOP);
     fill(0);
     textSize(18);
@@ -250,7 +283,35 @@ class Jogo {
     textAlign(CENTER, CENTER);
     textSize(16);
     fill(40);
-    text('(jogo em construção - prime ESPAÇO para terminar)', width / 2, height / 2);
+    text('(jogo em construção - ENTER termina; ESPAÇO faz chover)', width / 2, height / 2 + 120);
+
+    this.desenharAvisoMicrofone();
+  }
+
+  // Mensagem enquanto o microfone pede permissão, calibra ou falha
+  desenharAvisoMicrofone() {
+    const mic = this.microfone;
+    textAlign(CENTER, CENTER);
+
+    if (mic.aEspera()) {
+      noStroke();
+      fill(0, 0, 0, 170);
+      rect(0, 0, width, height);
+      fill(255);
+      textSize(26);
+      if (mic.pendente) {
+        text('Permite o acesso ao microfone', width / 2, height / 2);
+      } else {
+        text('A calibrar o microfone... fica em silêncio', width / 2, height / 2 - 14);
+        textSize(40);
+        fill(255, 220, 120);
+        text(mic.segundosCalibracao(), width / 2, height / 2 + 34);
+      }
+    } else if (mic.erro) {
+      textSize(14);
+      fill(160, 30, 30);
+      text('Microfone indisponível: usa ESPAÇO para chover', width / 2, height - 50);
+    }
   }
 
   // ----- Ecrã de resultado -----
@@ -327,7 +388,7 @@ class Jogo {
       if (tecla === '2') this.dificuldade = 'normal';
       if (tecla === '3') this.dificuldade = 'dificil';
       if (tecla === 'Enter') this.iniciar();
-    } else if (this.estado === 'execucao' && tecla === ' ') {
+    } else if (this.estado === 'execucao' && tecla === 'Enter') {
       // Temporário, só para testar a mudança de estados
       this.terminar();
     }
