@@ -1,5 +1,5 @@
 // Classe Microfone
-// Responsabilidade: ler o volume do microfone (p5.sound), fazer a
+// Responsabilidade: ler o volume do microfone (Web Audio API), fazer a
 // calibração inicial (~3 s) e aplicar a histerese entre o limite
 // mínimo e o máximo.
 
