@@ -36,6 +36,8 @@ class Jogo {
     this.microfone = new Microfone();
     this.nuvem = null;
     this.gotas = [];
+    this.balde = null;
+    this.proximaBolha = 0;   // ms até à próxima bolha de evaporação
   }
 
   // ---------- Controlo de estados ----------
@@ -50,7 +52,9 @@ class Jogo {
 
     this.microfone.iniciar();   // só calibra na primeira vez
     this.nuvem = new Nuvem();
+    this.balde = new Balde();
     this.gotas = [];
+    this.proximaBolha = millis() + 2500;
   }
 
   terminar() {
@@ -80,9 +84,29 @@ class Jogo {
       const novaGota = this.nuvem.atualizar(chovendo);
       if (novaGota) this.gotas.push(novaGota);
 
+      // Bolhas de evaporação sobem do chão em intervalos aleatórios
+      if (millis() >= this.proximaBolha) {
+        this.gotas.push(new Gota(random(40, width - 40), height - 30, 'bolha'));
+        this.proximaBolha = millis() + random(2000, 4000);
+      }
+
+      this.balde.atualizar();
+
       for (let i = this.gotas.length - 1; i >= 0; i--) {
-        this.gotas[i].atualizar();
-        if (this.gotas[i].foraDoEcra()) this.gotas.splice(i, 1);
+        const g = this.gotas[i];
+        g.atualizar();
+
+        if (this.balde.apanha(g)) {
+          if (g.eMa()) {
+            this.vidas--;            // contaminada ou bolha
+            this.balde.avisar();
+          } else {
+            this.litrosRecolhidos++; // água boa
+          }
+          this.gotas.splice(i, 1);
+        } else if (g.foraDoEcra()) {
+          this.gotas.splice(i, 1);
+        }
       }
 
       const decorrido = (millis() - this.tempoInicio) / 1000;
@@ -269,6 +293,7 @@ class Jogo {
     // Gotas e nuvem (balde e reservatório entram mais tarde)
     for (const g of this.gotas) g.mostrar();
     this.nuvem.mostrar();
+    this.balde.mostrar();
 
     // HUD provisório
     textAlign(LEFT, TOP);
@@ -283,7 +308,7 @@ class Jogo {
     textAlign(CENTER, CENTER);
     textSize(16);
     fill(40);
-    text('(jogo em construção - ENTER termina; ESPAÇO faz chover)', width / 2, height / 2 + 120);
+    text('(ENTER termina; ESPAÇO faz chover)', width / 2, height / 2 + 120);
 
     this.desenharMedidorVoz();
     this.desenharAvisoMicrofone();
