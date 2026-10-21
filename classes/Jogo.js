@@ -17,30 +17,30 @@
 const DIFICULDADES = {
   facil: {
     vidas: 5,
-    tempo: 75,
-    velocidadeGotas: [3, 4.5],
-    pctContaminadas: 0.10,
-    intervaloBolhas: [4000, 6500],
+    tempo: 60,
+    velocidadeGotas: [3.5, 5],
+    pctContaminadas: 0.12,
+    intervaloBolhas: [3500, 6000],
     margemMin: 0.02,
     margemMax: 0.04
   },
   normal: {
-    vidas: 3,
+    vidas: 4,
     tempo: 60,
-    velocidadeGotas: [4, 6],
-    pctContaminadas: 0.20,
-    intervaloBolhas: [2000, 4000],
+    velocidadeGotas: [4, 5.5],
+    pctContaminadas: 0.18,
+    intervaloBolhas: [2500, 4500],
     margemMin: 0.03,
     margemMax: 0.06
   },
   dificil: {
-    vidas: 2,
-    tempo: 45,
-    velocidadeGotas: [5, 7.5],
-    pctContaminadas: 0.35,
-    intervaloBolhas: [1000, 2200],
+    vidas: 3,
+    tempo: 50,
+    velocidadeGotas: [4.5, 6.5],
+    pctContaminadas: 0.28,
+    intervaloBolhas: [1500, 3000],
     margemMin: 0.035,
-    margemMax: 0.08
+    margemMax: 0.07
   }
 };
 
