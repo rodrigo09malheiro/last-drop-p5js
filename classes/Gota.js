@@ -6,13 +6,14 @@
 //   'bolha'       -> sobe do chão (evaporação); apanhada tira uma vida
 
 class Gota {
-  constructor(x, y, tipo = 'agua') {
+  constructor(x, y, tipo = 'agua', faixaVelocidade = [4, 6]) {
     this.x = x;
     this.y = y;
     this.tipo = tipo;
     this.largura = tipo === 'bolha' ? 16 : 8;
     this.altura = tipo === 'bolha' ? 16 : 13;
-    this.velocidade = tipo === 'bolha' ? random(2, 3.5) : random(4, 6);  // aleatoriedade controlada
+    // Aleatoriedade controlada: a faixa de velocidade das gotas vem da dificuldade
+    this.velocidade = tipo === 'bolha' ? random(2, 3.5) : random(faixaVelocidade[0], faixaVelocidade[1]);
   }
 
   atualizar() {

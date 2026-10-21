@@ -3,7 +3,8 @@
 // consoante o estado da histerese do microfone.
 
 class Nuvem {
-  constructor() {
+  // config: valores da dificuldade (pctContaminadas e velocidadeGotas)
+  constructor(config = {}) {
     this.x = width / 2;
     this.y = 60;
     this.largura = 160;
@@ -13,6 +14,8 @@ class Nuvem {
     this.intervaloGotas = 8;  // frames entre gotas
     this.contador = 0;
     this.chovendo = false;
+    this.pctContaminadas = config.pctContaminadas ?? 0.2;
+    this.velocidadeGotas = config.velocidadeGotas ?? [4, 6];
   }
 
   // Move a nuvem e devolve uma Gota nova se estiver a chover (senão null)
@@ -32,9 +35,9 @@ class Nuvem {
     if (this.contador >= this.intervaloGotas) {
       this.contador = 0;
       const x = this.x + random(-this.largura / 3, this.largura / 3);
-      // Aleatoriedade controlada: ~80% água, ~20% contaminada
-      const tipo = random() < 0.2 ? 'contaminada' : 'agua';
-      return new Gota(x, this.y + 64, tipo);
+      // Aleatoriedade controlada: a percentagem de contaminadas vem da dificuldade
+      const tipo = random() < this.pctContaminadas ? 'contaminada' : 'agua';
+      return new Gota(x, this.y + 64, tipo, this.velocidadeGotas);
     }
     return null;
   }

@@ -106,6 +106,14 @@ class Microfone {
     }
   }
 
+  // Muda a distância dos limites ao ruído ambiente (depende da dificuldade)
+  definirMargens(min, max) {
+    this.margemMin = min;
+    this.margemMax = max;
+    this.limiteMin = this.ruidoBase + this.margemMin;
+    this.limiteMax = this.ruidoBase + this.margemMax;
+  }
+
   terminarCalibracao() {
     this.calibrando = false;
     this.ruidoBase = this.amostras > 0 ? this.somaRuido / this.amostras : 0.01;

@@ -5,14 +5,54 @@
 // e a coordenação entre os restantes objetos.
 // =====================================================
 
+// Valores de cada dificuldade: é aqui que se ajusta o equilíbrio do jogo.
+//   vidas             -> vidas no início
+//   tempo             -> duração do jogo (segundos)
+//   velocidadeGotas   -> [mínimo, máximo] em píxeis por frame
+//   pctContaminadas   -> de 0 a 1 (percentagem de gotas contaminadas)
+//   intervaloBolhas   -> [mínimo, máximo] em ms entre bolhas de evaporação
+//                        (intervalo menor = mais evaporação)
+//   margemMin/Max     -> distância dos limites de voz ao ruído ambiente
+//                        (margem maior = é preciso falar mais alto)
+const DIFICULDADES = {
+  facil: {
+    vidas: 5,
+    tempo: 75,
+    velocidadeGotas: [3, 4.5],
+    pctContaminadas: 0.10,
+    intervaloBolhas: [4000, 6500],
+    margemMin: 0.02,
+    margemMax: 0.04
+  },
+  normal: {
+    vidas: 3,
+    tempo: 60,
+    velocidadeGotas: [4, 6],
+    pctContaminadas: 0.20,
+    intervaloBolhas: [2000, 4000],
+    margemMin: 0.03,
+    margemMax: 0.06
+  },
+  dificil: {
+    vidas: 2,
+    tempo: 45,
+    velocidadeGotas: [5, 7.5],
+    pctContaminadas: 0.35,
+    intervaloBolhas: [1000, 2200],
+    margemMin: 0.035,
+    margemMax: 0.08
+  }
+};
+
 class Jogo {
   constructor() {
     // Estados possíveis: 'inicio', 'execucao', 'resultado'
     this.estado = 'inicio';
 
     // Dificuldade escolhida no ecrã de início: 'facil', 'normal' ou 'dificil'
-    // (os valores de cada nível entram mais tarde, na issue das dificuldades)
+    // (os valores de cada nível estão em DIFICULDADES, no topo deste ficheiro)
     this.dificuldade = 'normal';
+    this.config = DIFICULDADES.normal;
 
     // Tempo
     this.duracao = 60;      // segundos de jogo
@@ -45,18 +85,24 @@ class Jogo {
 
   iniciar() {
     this.estado = 'execucao';
+
+    // Aplica os valores da dificuldade escolhida
+    this.config = DIFICULDADES[this.dificuldade];
+    this.duracao = this.config.tempo;
+    this.vidas = this.config.vidas;
+
     this.tempoInicio = millis();
     this.tempoRestante = this.duracao;
     this.litrosRecolhidos = 0;
     this.litrosDesperdicados = 0;
-    this.vidas = 3;
     this.motivoFim = '';
 
+    this.microfone.definirMargens(this.config.margemMin, this.config.margemMax);
     this.microfone.iniciar();   // só calibra na primeira vez
-    this.nuvem = new Nuvem();
+    this.nuvem = new Nuvem(this.config);
     this.balde = new Balde();
     this.gotas = [];
-    this.proximaBolha = millis() + 2500;
+    this.proximaBolha = millis() + this.config.intervaloBolhas[0];
   }
 
   terminar() {
@@ -89,7 +135,7 @@ class Jogo {
       // Bolhas de evaporação sobem do chão em intervalos aleatórios
       if (millis() >= this.proximaBolha) {
         this.gotas.push(new Gota(random(40, width - 40), height - 30, 'bolha'));
-        this.proximaBolha = millis() + random(2000, 4000);
+        this.proximaBolha = millis() + random(this.config.intervaloBolhas[0], this.config.intervaloBolhas[1]);
       }
 
       this.balde.atualizar();
@@ -313,7 +359,7 @@ class Jogo {
     this.desenharAvisoMicrofone();
   }
 
-  // HUD: tempo (centro), litros recolhidos (esquerda) e vidas (direita)
+  // HUD: litros e dificuldade (esquerda), tempo (centro) e vidas (direita)
   desenharHUD() {
     noStroke();
     fill(25, 18, 14, 200);
@@ -328,6 +374,12 @@ class Jogo {
     fill(255);
     text(this.litrosRecolhidos + ' L', 36, 21);
 
+    // Dificuldade escolhida
+    textSize(14);
+    fill(255, 220, 120);
+    text(this.nomeDificuldade(), 130, 21);
+    textSize(18);
+
     // Tempo (fica vermelho nos últimos 10 segundos)
     textAlign(CENTER, CENTER);
     const t = ceil(this.tempoRestante);
@@ -335,7 +387,7 @@ class Jogo {
     text('Tempo: ' + t + ' s', width / 2, 21);
 
     // Vidas em corações (cheios e vazios)
-    const total = 3;
+    const total = this.config.vidas;
     for (let i = 0; i < total; i++) {
       this.desenharCoracao(width - 30 - (total - 1 - i) * 30, 12, i < this.vidas);
     }
