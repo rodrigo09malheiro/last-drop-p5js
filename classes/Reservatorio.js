@@ -59,11 +59,17 @@ class Reservatorio {
     return this.nivel <= 0;
   }
 
+  // Cheio: já não cabe (quase) nada; a água que chegar é desperdiçada
+  cheio() {
+    return this.nivel >= this.capacidade - 0.5;
+  }
+
   superficieY() {
     return this.y + this.h - (this.nivel / this.capacidade) * this.h;
   }
 
-  mostrar() {
+  // aviso = true faz a moldura piscar a vermelho (cheio e a chover)
+  mostrar(aviso = false) {
     noStroke();
 
     // Título
@@ -93,7 +99,7 @@ class Reservatorio {
 
     // Moldura
     noFill();
-    stroke(0);
+    stroke(aviso && floor(millis() / 250) % 2 === 0 ? color(255, 60, 60) : color(0));
     strokeWeight(3);
     rect(this.x, this.y, this.w, this.h);
     noStroke();

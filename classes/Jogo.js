@@ -81,6 +81,8 @@ class Jogo {
     this.litrosDesperdicados = 0;
     this.vidas = 3;
     this.motivoFim = '';     // 'tempo' ou 'vidas'
+    this.chovendo = false;   // a nuvem está a chover (voz)
+    this.avisoCheio = 0;     // ms em que o aviso de reservatório cheio ainda fica visível
 
     // Botões do ecrã de início (x, y, largura, altura, texto)
     this.botoesDificuldade = [
@@ -114,6 +116,8 @@ class Jogo {
     this.litrosRecolhidos = 0;
     this.litrosDesperdicados = 0;
     this.motivoFim = '';
+    this.chovendo = false;
+    this.avisoCheio = 0;
 
     this.microfone.definirMargens(this.config.margemMin, this.config.margemMax);
     this.microfone.iniciar();   // só calibra na primeira vez
@@ -147,6 +151,7 @@ class Jogo {
       // Chove quando a histerese do microfone está ativa
       // (provisório: ESPAÇO também faz chover, para testar sem microfone)
       const chovendo = this.microfone.aFalar || keyIsDown(32);
+      this.chovendo = chovendo;
 
       const novaGota = this.nuvem.atualizar(chovendo);
       if (novaGota) this.gotas.push(novaGota);
@@ -155,6 +160,10 @@ class Jogo {
       const sol = this.intensidadeSol();
       const dt = min(deltaTime, 100) / 1000;
       this.reservatorio.atualizar(dt, sol);
+
+      // Chover com o reservatório cheio: aviso visível (fica ~1 s depois de parar)
+      if (chovendo && this.reservatorio.cheio()) this.avisoCheio = 1000;
+      else this.avisoCheio = max(0, this.avisoCheio - deltaTime);
 
       // Bolhas de evaporação sobem do chão; com mais sol aparecem mais depressa
       if (millis() >= this.proximaBolha) {
@@ -175,10 +184,17 @@ class Jogo {
           } else {
             this.litrosRecolhidos++; // água boa
             // Reservatório cheio: a água que sobra é desperdício
-            this.litrosDesperdicados += this.reservatorio.adicionar(1);
+            const sobra = this.reservatorio.adicionar(1);
+            this.litrosDesperdicados += sobra;
+            if (sobra > 0) this.avisoCheio = 1000;
           }
           this.gotas.splice(i, 1);
         } else if (g.foraDoEcra()) {
+          // Água que cai ao chão com o reservatório cheio também é desperdício
+          if (g.tipo === 'agua' && this.reservatorio.cheio()) {
+            this.litrosDesperdicados++;
+            this.avisoCheio = 1000;
+          }
           this.gotas.splice(i, 1);
         }
       }
@@ -374,12 +390,14 @@ class Jogo {
 
     // Sol, reservatório (com vapor), gotas, nuvem e balde
     this.desenharSol();
-    this.reservatorio.mostrar();
+    this.reservatorio.mostrar(this.avisoCheio > 0);
     for (const g of this.gotas) g.mostrar();
     this.nuvem.mostrar();
     this.balde.mostrar();
 
     this.desenharHUD();
+    this.desenharDesperdicio();
+    this.desenharAvisoCheio();
 
     textAlign(CENTER, CENTER);
     textSize(16);
@@ -388,6 +406,36 @@ class Jogo {
 
     this.desenharMedidorVoz();
     this.desenharAvisoMicrofone();
+  }
+
+  // Litros desperdiçados, por baixo do reservatório
+  desenharDesperdicio() {
+    const r = this.reservatorio;
+    noStroke();
+    textAlign(CENTER, CENTER);
+    textSize(13);
+    fill(this.litrosDesperdicados > 0 ? color(190, 40, 40) : color(0));
+    text('Desp.: ' + this.litrosDesperdicados + ' L', r.x + r.w / 2, r.y + r.h + 34);
+  }
+
+  // Aviso quando se chove com o reservatório cheio
+  desenharAvisoCheio() {
+    if (this.avisoCheio <= 0) return;
+    const pisca = floor(millis() / 250) % 2 === 0;
+    const w = 380, h = 52, x = width / 2 - w / 2, y = 150;
+    noStroke();
+    fill(25, 18, 14, 220);
+    rect(x, y, w, h);
+    fill(pisca ? color(255, 60, 60) : color(255, 150, 60));
+    rect(x, y, w, 3);
+    rect(x, y + h - 3, w, 3);
+    textAlign(CENTER, CENTER);
+    textSize(18);
+    fill(255, 220, 120);
+    text('Reservatório cheio!', width / 2, y + 17);
+    textSize(14);
+    fill(255);
+    text('Pára de falar: a água é desperdiçada', width / 2, y + 37);
   }
 
   // Sol que fica mais intenso (maior e mais vermelho) ao longo do jogo
