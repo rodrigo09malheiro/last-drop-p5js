@@ -89,3 +89,35 @@ Aluno: Rodrigo Fernandes Malheiro (33103) · Sistemas Multimédia 2026-2027
 | Ferramenta | Finalidade | Resultado utilizado | Alterações/decisões do estudante |
 |---|---|---|---|
 | Claude (Anthropic) | Diagnóstico do erro de consola, apoio na resolução de conflitos/divergência do Git e validação do cumprimento das tarefas dos *issues*. | Passos de depuração do `index.html` e sequência de comandos Git (`fetch`, `reset`, `commit`, `push`). | Identifiquei a falha de inclusão do script no HTML, executei a sequência de comandos para alinhar o Git e procedi à marcação/fecho das *issues* no GitHub. |
+
+## Sessão 4 – 21 de outubro de 2026
+
+**Objetivo:** Implementar as dificuldades (Fácil/Normal/Difícil), a classe `Reservatorio` com nível, evaporação e desperdício, e melhorar a evaporação (pedidos da professora).
+
+**Atividades realizadas:**
+- Issue #13 (dificuldades): criei o objeto `DIFICULDADES` em `Jogo.js`, com uma configuração por nível: vidas, tempo, velocidade das gotas, percentagem de contaminadas, intervalo das bolhas, evaporação, sol máximo, reservatório e margens de voz. A dificuldade escolhida no ecrã de Início aplica-se ao arrancar o jogo e aparece no HUD e no ecrã de Resultado.
+- Issue #12 (evaporação): a taxa de evaporação ficou só na configuração da dificuldade (um único sítio no código). Criei um sol que cresce ao longo do jogo e acelera a evaporação. Acrescentei vapor a subir do reservatório e os litros evaporados no HUD (`Evap.`) e no Resultado. O jogo termina quando o reservatório chega a 0.
+- Issue #11 (`Reservatorio`): criei a classe com o nível de água, marcas de litros e o texto "X / 50 L" (fica vermelho abaixo de 20%). A água apanhada enche o reservatório.
+- Reservatório cheio: ao chover com o reservatório cheio aparece um aviso a piscar ("Reservatório cheio!"), e a moldura do depósito pisca a vermelho. Os litros desperdiçados contam tanto na água apanhada como na que cai ao chão com o reservatório cheio. Aparecem em "Desp.: X L" por baixo do reservatório e no Resultado.
+- Testei as mecânicas num browser de teste: água ao chão com o reservatório cheio e não cheio, água apanhada com o reservatório cheio, e o aviso a desaparecer quando paro de chover.
+- [Outras atividades de hoje, se houver]
+
+**Problemas:**
+- Erro na consola (`Cannot read properties of null`) ao arrancar o jogo, porque o `iniciar()` falhava antes de criar o reservatório. [Confirma a causa que encontraste.]
+- A evaporação faz o nível baixar sempre, por isso o reservatório quase nunca estava exatamente em 50 L e o "cheio" nunca se verificava.
+- [Outros problemas]
+
+**Solução:**
+- [Como resolveste o erro da consola.]
+- Defini "cheio" com uma pequena folga de 0,5 L (método `cheio()` em `Reservatorio.js`).
+
+**Decisões:**
+- Toda a afinação do equilíbrio do jogo (incluindo a evaporação) fica num só sítio, o objeto `DIFICULDADES`, e não dentro das classes.
+- A água que cai ao chão com o reservatório cheio também conta como desperdício, para chover com o reservatório cheio penalizar o jogador mesmo sem apanhar a gota.
+- [Outras decisões]
+
+### Utilização de IA (Sessão 4)
+
+| Ferramenta | Finalidade | Resultado utilizado | Alterações/decisões do estudante |
+|---|---|---|---|
+| Claude (Anthropic) | Acrescentar o aviso de reservatório cheio e o desperdício da água que cai ao chão, e testar as mecânicas num browser de teste | Alterações em `Jogo.js` e `Reservatorio.js` (`cheio()`, `desenharAvisoCheio()`, `desenharDesperdicio()`) | Decidi que a água ao chão também conta como desperdício, copiei os ficheiros para o projeto e confirmei no browser. [Se o resto também teve ajuda de IA, acrescenta aqui.] |
