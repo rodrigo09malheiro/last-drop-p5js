@@ -11,7 +11,12 @@
 //   velocidadeGotas   -> [mínimo, máximo] em píxeis por frame
 //   pctContaminadas   -> de 0 a 1 (percentagem de gotas contaminadas)
 //   intervaloBolhas   -> [mínimo, máximo] em ms entre bolhas de evaporação
-//                        (intervalo menor = mais evaporação)
+//                        (o sol encurta este intervalo ao longo do jogo)
+//   evaporacao        -> litros que o reservatório perde por segundo com o sol a 1x
+//                        (TAXA DE EVAPORAÇÃO: é só aqui que se altera)
+//   solMax            -> intensidade do sol no fim do jogo (1 = normal);
+//                        a evaporação multiplica por este valor, a subir ao longo do tempo
+//   capacidadeReservatorio / reservatorioInicial -> litros
 //   margemMin/Max     -> distância dos limites de voz ao ruído ambiente
 //                        (margem maior = é preciso falar mais alto)
 const DIFICULDADES = {
@@ -21,6 +26,10 @@ const DIFICULDADES = {
     velocidadeGotas: [3.5, 5],
     pctContaminadas: 0.12,
     intervaloBolhas: [3500, 6000],
+    evaporacao: 0.4,
+    solMax: 1.8,
+    capacidadeReservatorio: 50,
+    reservatorioInicial: 30,
     margemMin: 0.02,
     margemMax: 0.04
   },
@@ -30,6 +39,10 @@ const DIFICULDADES = {
     velocidadeGotas: [4, 5.5],
     pctContaminadas: 0.18,
     intervaloBolhas: [2500, 4500],
+    evaporacao: 0.6,
+    solMax: 2,
+    capacidadeReservatorio: 50,
+    reservatorioInicial: 25,
     margemMin: 0.03,
     margemMax: 0.06
   },
@@ -39,6 +52,10 @@ const DIFICULDADES = {
     velocidadeGotas: [4.5, 6.5],
     pctContaminadas: 0.28,
     intervaloBolhas: [1500, 3000],
+    evaporacao: 1,
+    solMax: 2.8,
+    capacidadeReservatorio: 50,
+    reservatorioInicial: 20,
     margemMin: 0.035,
     margemMax: 0.07
   }
@@ -78,6 +95,7 @@ class Jogo {
     this.nuvem = null;
     this.gotas = [];
     this.balde = null;
+    this.reservatorio = null;
     this.proximaBolha = 0;   // ms até à próxima bolha de evaporação
   }
 
@@ -101,6 +119,7 @@ class Jogo {
     this.microfone.iniciar();   // só calibra na primeira vez
     this.nuvem = new Nuvem(this.config);
     this.balde = new Balde();
+    this.reservatorio = new Reservatorio(this.config);
     this.gotas = [];
     this.proximaBolha = millis() + this.config.intervaloBolhas[0];
   }
@@ -132,10 +151,15 @@ class Jogo {
       const novaGota = this.nuvem.atualizar(chovendo);
       if (novaGota) this.gotas.push(novaGota);
 
-      // Bolhas de evaporação sobem do chão em intervalos aleatórios
+      // Evaporação: o reservatório perde água, cada vez mais depressa com o sol
+      const sol = this.intensidadeSol();
+      const dt = min(deltaTime, 100) / 1000;
+      this.reservatorio.atualizar(dt, sol);
+
+      // Bolhas de evaporação sobem do chão; com mais sol aparecem mais depressa
       if (millis() >= this.proximaBolha) {
-        this.gotas.push(new Gota(random(40, width - 40), height - 30, 'bolha'));
-        this.proximaBolha = millis() + random(this.config.intervaloBolhas[0], this.config.intervaloBolhas[1]);
+        this.gotas.push(new Gota(random(110, 700), height - 30, 'bolha'));
+        this.proximaBolha = millis() + random(this.config.intervaloBolhas[0], this.config.intervaloBolhas[1]) / sol;
       }
 
       this.balde.atualizar();
@@ -150,6 +174,8 @@ class Jogo {
             this.balde.avisar();
           } else {
             this.litrosRecolhidos++; // água boa
+            // Reservatório cheio: a água que sobra é desperdício
+            this.litrosDesperdicados += this.reservatorio.adicionar(1);
           }
           this.gotas.splice(i, 1);
         } else if (g.foraDoEcra()) {
@@ -163,6 +189,9 @@ class Jogo {
       // Fim de jogo: vidas a zero ou tempo esgotado
       if (this.vidas <= 0) {
         this.motivoFim = 'vidas';
+        this.terminar();
+      } else if (this.reservatorio.vazio()) {
+        this.motivoFim = 'reservatorio';
         this.terminar();
       } else if (this.tempoRestante <= 0) {
         this.motivoFim = 'tempo';
@@ -343,7 +372,9 @@ class Jogo {
   desenharExecucao() {
     background(135, 195, 235);
 
-    // Gotas e nuvem (balde e reservatório entram mais tarde)
+    // Sol, reservatório (com vapor), gotas, nuvem e balde
+    this.desenharSol();
+    this.reservatorio.mostrar();
     for (const g of this.gotas) g.mostrar();
     this.nuvem.mostrar();
     this.balde.mostrar();
@@ -357,6 +388,39 @@ class Jogo {
 
     this.desenharMedidorVoz();
     this.desenharAvisoMicrofone();
+  }
+
+  // Sol que fica mais intenso (maior e mais vermelho) ao longo do jogo
+  desenharSol() {
+    const sol = this.intensidadeSol();
+    const t = (sol - 1) / (this.config.solMax - 1 || 1);   // 0 a 1
+    const tam = 36 + 34 * t;
+    const cx = 650, cy = 95;
+    const corSol = lerpColor(color(255, 236, 110), color(255, 130, 50), t);
+    const corMiolo = lerpColor(color(255, 250, 175), color(255, 200, 110), t);
+    const raio = 8 + 8 * t;
+
+    noStroke();
+    fill(corSol);
+    rect(cx - tam / 2, cy - tam / 2, tam, tam);
+    fill(corMiolo);
+    rect(cx - tam / 3, cy - tam / 3, tam * 2 / 3, tam * 2 / 3);
+    fill(corSol);
+    rect(cx - 5, cy - tam / 2 - raio, 10, raio - 2);
+    rect(cx - 5, cy + tam / 2 + 2, 10, raio - 2);
+    rect(cx - tam / 2 - raio, cy - 5, raio - 2, 10);
+    rect(cx + tam / 2 + 2, cy - 5, raio - 2, 10);
+
+    textAlign(CENTER, CENTER);
+    textSize(13);
+    fill(0);
+    text('SOL x' + sol.toFixed(1), cx, cy + 56);
+  }
+
+  // Intensidade do sol: 1 no início e solMax no fim do tempo
+  intensidadeSol() {
+    const progresso = constrain(1 - this.tempoRestante / this.duracao, 0, 1);
+    return 1 + (this.config.solMax - 1) * progresso;
   }
 
   // HUD: litros e dificuldade (esquerda), tempo (centro) e vidas (direita)
@@ -378,6 +442,10 @@ class Jogo {
     textSize(14);
     fill(255, 220, 120);
     text(this.nomeDificuldade(), 130, 21);
+
+    // Litros perdidos por evaporação
+    fill(255, 170, 120);
+    text('Evap.: ' + this.reservatorio.litrosEvaporados.toFixed(1) + ' L', 205, 21);
     textSize(18);
 
     // Tempo (fica vermelho nos últimos 10 segundos)
@@ -510,7 +578,12 @@ class Jogo {
 
     textSize(18);
     fill(255, 220, 120);
-    text(this.motivoFim === 'vidas' ? 'Ficaste sem vidas!' : 'O tempo acabou!', width / 2, 160);
+    const mensagens = {
+      vidas: 'Ficaste sem vidas!',
+      reservatorio: 'O reservatório secou!',
+      tempo: 'O tempo acabou!'
+    };
+    text(mensagens[this.motivoFim] || '', width / 2, 160);
 
     textSize(20);
     fill(200, 225, 255);
@@ -518,6 +591,7 @@ class Jogo {
     text('Litros recolhidos: ' + this.litrosRecolhidos, width / 2, 245);
     text('Litros desperdiçados: ' + this.litrosDesperdicados, width / 2, 277);
     text('Vidas restantes: ' + this.vidas, width / 2, 309);
+    text('Litros evaporados: ' + this.reservatorio.litrosEvaporados.toFixed(1), width / 2, 341);
 
     // Dica real de poupança de água (próxima tarefa)
 

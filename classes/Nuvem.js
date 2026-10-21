@@ -10,7 +10,7 @@ class Nuvem {
     this.largura = 160;
     this.velocidade = 1.5;
     this.direcao = 1;
-    this.margem = 100;        // distância mínima aos lados do ecrã
+    this.margem = 150;        // distância mínima aos lados (deixa livre o reservatório e o medidor de voz)
     this.intervaloGotas = 8;  // frames entre gotas
     this.contador = 0;
     this.chovendo = false;
