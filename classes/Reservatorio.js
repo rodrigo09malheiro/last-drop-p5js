@@ -15,11 +15,12 @@ class Reservatorio {
     this.taxaEvaporacao = config.evaporacao ?? 0.6;          // litros/s com o sol a 1x
     this.litrosEvaporados = 0;                               // total perdido (para o HUD)
 
-    // Paredes da estrutura (o telhado fica por cima de y)
-    this.x = 14;
-    this.y = 175;
+    // Paredes da estrutura: assenta no chão da aldeia (y = 480), como as casas
+    // (o telhado fica por cima de y)
+    this.x = 708;
     this.w = 70;
     this.h = 225;
+    this.y = 480 - this.h;
 
     // Janela onde se vê o nível da água
     this.janela = { x: this.x + 13, y: this.y + 22, w: this.w - 26, h: this.h - 80 };
@@ -76,12 +77,6 @@ class Reservatorio {
     const pisca = floor(millis() / 250) % 2 === 0;
     const cheio = this.cheio();
     const vazio = this.vazio();
-
-    // Plataforma de terra (mesmas cores do chão da aldeia)
-    fill(150, 100, 60);
-    rect(x - 10, y + h, w + 20, 12);
-    fill(125, 82, 48);
-    rect(x - 10, y + h, w + 20, 4);
 
     // Paredes (mesma cor das casas) com juntas de tijolo
     fill(205, 160, 105);
@@ -169,18 +164,18 @@ class Reservatorio {
       rect(x - 8, y + h - 34 + ((millis() / 8) % 30), 4, 6);
     }
 
-    // Nome e litros por baixo da estrutura
+    // Nome e litros por cima do telhado (por baixo está o chão, onde anda o balde)
     textAlign(CENTER, CENTER);
     textSize(11);
     fill(0);
-    text('RESERVATÓRIO', x + w / 2, y + h + 26);
+    text('RESERVATÓRIO', x + w / 2, y - 76);
     textSize(13);
     if (cheio && pisca) {
       fill(200, 30, 30);
-      text('DESPERDÍCIO!', x + w / 2, y + h + 44);
+      text('DESPERDÍCIO!', x + w / 2, y - 60);
     } else {
       fill(0);
-      text(ceil(this.nivel) + ' / ' + this.capacidade + ' L', x + w / 2, y + h + 44);
+      text(ceil(this.nivel) + ' / ' + this.capacidade + ' L', x + w / 2, y - 60);
     }
 
     // Vapor (evaporação visível)
