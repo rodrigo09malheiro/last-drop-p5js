@@ -121,3 +121,33 @@ Aluno: Rodrigo Fernandes Malheiro (33103) · Sistemas Multimédia 2026-2027
 | Ferramenta | Finalidade | Resultado utilizado | Alterações/decisões do estudante |
 |---|---|---|---|
 | Claude (Anthropic) | Acrescentar o aviso de reservatório cheio e o desperdício da água que cai ao chão, e testar as mecânicas num browser de teste | Alterações em `Jogo.js` e `Reservatorio.js` (`cheio()`, `desenharAvisoCheio()`, `desenharDesperdicio()`) | Decidi que a água ao chão também conta como desperdício, copiei os ficheiros para o projeto e confirmei no browser. [Se o resto também teve ajuda de IA, acrescenta aqui.] |
+
+## Sessão 5 – 22 de outubro de 2026
+
+**Objetivo:** Integrar o reservatório na aldeia (ao nível do chão), remover o painel de fundo do medidor de voz alinhando-o à mesma altitude, corrigir a visibilidade das linhas do balde, calibrar automaticamente o microfone no início/reinício da partida, e finalizar o layout visual sem sobreposições.
+
+**Atividades realizadas:**
+- Reposicionamento do reservatório e medidor: o reservatório foi integrado no nível do chão da aldeia à direita (`y = 480`), e o medidor de voz foi colocado à esquerda na mesma altitude, perdendo o painel de fundo escuro para ficar mais integrado no cenário.
+- Correção de visibilidade: as linhas/cintas do balde foram redesenhadas por último e com cores escuras para se destacarem perfeitamente sobre o corpo do balde.
+- Calibração automática do microfone: implementada a calibração automática sempre que uma nova partida é iniciada ou repetida.
+- Limpeza de interface e sobreposições: ajuste das posições das casas e elementos do HUD (como o sol, nuvem e medidor) para evitar que se sobrepusessem, e atualização das mensagens de ajuda e controlo para focar totalmente na interação por voz.
+- Testes das alterações visuais e mecânicas no browser de teste e preparação/envio dos commits correspondentes para o repositório GitHub (`rodrigo09malheiro/last-drop-p5js.git`).
+
+**Problemas:**
+- O medidor de voz original criava sobreposição visual com o telhado da casa e as legendas de texto ("máx", "mín", "VOZ") perdiam legibilidade sobre o céu.
+- O reservatório flutuava sobre uma plataforma separada em vez de estar assente de forma natural no chão da aldeia.
+- Os atalhos de teste por teclado (ESPAÇO e ENTER) ainda interferiam com o fluxo normal do jogo centrado na voz.
+
+**Solução:**
+- Remoção do painel de fundo do medidor, escurecimento dos textos de nível para garantir contraste, e relocalização do reservatório diretamente para o chão da aldeia, ajustando o texto dos litros para cima do telhado.
+- Limpeza dos atalhos manuais de teste e garantia de que o microfone calibra de forma consistente a cada reinício.
+
+**Decisões:**
+- O medidor de voz mantém apenas a barra de nível dinâmica e as marcações de limite, eliminando o painel rígido para uma estética mais limpa e integrada.
+- O jogo passa a depender exclusivamente da entrada de voz do microfone calibrado no arranque, removendo controlos de teclado desnecessários para a experiência final.
+
+### Utilização de IA (Sessão 5)
+
+| Ferramenta | Finalidade | Resultado utilizado | Alterações/decisões do estudante |
+|---|---|---|---|
+| Claude (Anthropic) | Ajustar a posição do reservatório para o nível do chão, remover o painel do medidor de voz, corrigir as linhas do balde e automatizar a calibração do microfone | Alterações de código nos ficheiros `Jogo.js`, `Reservatorio.js` e `Balde.js` | Analisei as propostas, apliquei e testei os ficheiros no projeto, e validei o comportamento visual e interativo antes de preparar os commits. |
