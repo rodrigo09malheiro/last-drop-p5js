@@ -526,9 +526,8 @@ class Jogo {
     const mic = this.microfone;
     if (!mic.ativo) return;
 
-    // Sem painel de fundo; assenta no chão (y = 480), à mesma altura do reservatório
-    const x = 62, w = 30, h = 200;
-    const y = 480 - h;
+    // Sem painel de fundo; fica à esquerda, na mesma altura de antes (y = 120)
+    const x = 62, y = 120, w = 30, h = 200;
     const escala = max(0.15, mic.limiteMax * 2.5);   // volume que enche o medidor
     const paraY = (v) => y + h - constrain(v / escala, 0, 1) * h;
 
