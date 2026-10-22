@@ -401,10 +401,10 @@ class Jogo {
 
     this.desenharChao();
 
-    // Casas (a da esquerda fica de fora para não tapar o reservatório)
+    // Casas (a da esquerda fica de fora para não tapar o medidor de voz e a da
+    // direita dá lugar ao reservatório, que faz parte da aldeia)
     this.desenharCasa(135, 430, 70, 50);
     this.desenharCasa(595, 430, 70, 50);
-    this.desenharCasa(685, 405, 95, 75);
   }
 
   // Chão rachado, comum a todos os ecrãs
@@ -526,17 +526,16 @@ class Jogo {
     const mic = this.microfone;
     if (!mic.ativo) return;
 
-    const x = 745, y = 120, w = 30, h = 200;
+    // Sem painel de fundo; assenta no chão (y = 480), à mesma altura do reservatório
+    const x = 62, w = 30, h = 200;
+    const y = 480 - h;
     const escala = max(0.15, mic.limiteMax * 2.5);   // volume que enche o medidor
     const paraY = (v) => y + h - constrain(v / escala, 0, 1) * h;
-
-    // Painel no mesmo estilo do HUD
-    this.desenharPainel(x - 44, y - 34, 92, h + 50);
 
     noStroke();
     textAlign(CENTER, CENTER);
     textSize(13);
-    fill(255, 220, 120);
+    fill(0);
     text('VOZ', x + w / 2, y - 16);
 
     // Fundo e moldura
@@ -549,16 +548,17 @@ class Jogo {
     rect(x, topo, w, y + h - topo);
 
     // Linhas dos limites
-    fill(255, 80, 80);
+    fill(230, 50, 50);
     rect(x - 6, paraY(mic.limiteMax) - 1, w + 12, 3);
-    fill(120, 255, 140);
+    fill(40, 180, 80);
     rect(x - 6, paraY(mic.limiteMin) - 1, w + 12, 3);
 
+    // Texto escuro, para se ler bem em cima do céu
     textAlign(RIGHT, CENTER);
     textSize(11);
-    fill(255, 120, 120);
+    fill(170, 30, 30);
     text('máx', x - 10, paraY(mic.limiteMax));
-    fill(140, 255, 160);
+    fill(20, 120, 50);
     text('mín', x - 10, paraY(mic.limiteMin));
 
     noFill();
