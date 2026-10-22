@@ -35,14 +35,40 @@ class Balde {
     noStroke();
     const x = this.x - this.largura / 2;
     const y = this.y;
-    // Corpo do balde (vermelho a piscar quando se apanha algo mau)
-    fill(this.flash > 0 ? color(220, 60, 60) : color(150, 150, 165));
-    rect(x, y, this.largura, 8);                     // aro
-    fill(this.flash > 0 ? color(190, 40, 40) : color(110, 115, 130));
+    const mau = this.flash > 0;   // pisca a vermelho quando se apanha algo mau
+
+    const contorno = color(40, 40, 52);
+    const aro      = mau ? color(235, 90, 90)  : color(175, 180, 195);
+    const corpo    = mau ? color(200, 55, 55)  : color(120, 126, 144);
+    const sombra   = mau ? color(150, 35, 35)  : color(85, 90, 108);
+    const brilho   = mau ? color(255, 160, 160) : color(205, 210, 225);
+
+    // Pega
+    fill(contorno);
+    rect(x + 10, y - 14, 4, 14);
+    rect(x + this.largura - 14, y - 14, 4, 14);
+    rect(x + 10, y - 14, this.largura - 20, 4);
+
+    // Contorno e corpo (ligeiramente mais estreito em baixo)
+    fill(contorno);
+    rect(x - 2, y - 2, this.largura + 4, 12);
+    rect(x + 4, y + 8, this.largura - 8, this.altura - 6);
+    rect(x + 10, y + this.altura, this.largura - 20, 6);
+
+    fill(aro);
+    rect(x, y, this.largura, 8);
+    fill(corpo);
     rect(x + 6, y + 8, this.largura - 12, this.altura - 8);
     rect(x + 12, y + this.altura, this.largura - 24, 4);
+
+    // Cintas e sombra do lado direito
+    fill(sombra);
+    rect(x + 6, y + 20, this.largura - 12, 3);
+    rect(x + 6, y + 34, this.largura - 12, 3);
+    rect(x + this.largura - 18, y + 8, 12, this.altura - 8);
+
     // Brilho
-    fill(190, 195, 210);
-    rect(x + 12, y + 14, 4, this.altura - 14);
+    fill(brilho);
+    rect(x + 12, y + 12, 4, this.altura - 14);
   }
 }
