@@ -42,6 +42,7 @@ class Balde {
     const corpo    = mau ? color(200, 55, 55)  : color(120, 126, 144);
     const sombra   = mau ? color(150, 35, 35)  : color(85, 90, 108);
     const brilho   = mau ? color(255, 160, 160) : color(205, 210, 225);
+    const cinta    = mau ? color(105, 20, 20)   : color(40, 40, 52);   // linhas escuras bem visíveis
 
     // Pega
     fill(contorno);
@@ -61,14 +62,17 @@ class Balde {
     rect(x + 6, y + 8, this.largura - 12, this.altura - 8);
     rect(x + 12, y + this.altura, this.largura - 24, 4);
 
-    // Cintas e sombra do lado direito
+    // Sombra do lado direito
     fill(sombra);
-    rect(x + 6, y + 20, this.largura - 12, 3);
-    rect(x + 6, y + 34, this.largura - 12, 3);
     rect(x + this.largura - 18, y + 8, 12, this.altura - 8);
 
     // Brilho
     fill(brilho);
     rect(x + 12, y + 12, 4, this.altura - 14);
+
+    // Cintas (linhas): desenhadas por último, por cima de tudo, para se verem sempre
+    fill(cinta);
+    rect(x + 6, y + 20, this.largura - 12, 3);
+    rect(x + 6, y + 34, this.largura - 12, 3);
   }
 }
