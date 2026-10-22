@@ -1,6 +1,8 @@
 // Classe Reservatorio
 // Responsabilidade: nível de água do reservatório, evaporação ao longo
-// do tempo (acelerada pelo sol) e desperdício quando está cheio.
+// do tempo (acelerada pelo sol), desperdício quando está cheio e o
+// desenho do reservatório como uma estrutura em pixel art, no estilo
+// das casas da aldeia.
 //
 // A taxa de evaporação NÃO está aqui: vem da dificuldade (DIFICULDADES, em
 // Jogo.js), que é o único sítio onde se ajusta.
@@ -13,13 +15,16 @@ class Reservatorio {
     this.taxaEvaporacao = config.evaporacao ?? 0.6;          // litros/s com o sol a 1x
     this.litrosEvaporados = 0;                               // total perdido (para o HUD)
 
-    // Posição e tamanho do depósito no ecrã
+    // Paredes da estrutura (o telhado fica por cima de y)
     this.x = 14;
-    this.y = 140;
+    this.y = 175;
     this.w = 70;
-    this.h = 260;
+    this.h = 225;
 
-    this.vapor = [];   // partículas de vapor a subir do depósito
+    // Janela onde se vê o nível da água
+    this.janela = { x: this.x + 13, y: this.y + 22, w: this.w - 26, h: this.h - 80 };
+
+    this.vapor = [];   // partículas de vapor a subir da chaminé
   }
 
   // dt em segundos; sol = multiplicador da intensidade do sol (1 = normal)
@@ -29,11 +34,11 @@ class Reservatorio {
     this.nivel -= perda;
     this.litrosEvaporados += perda;
 
-    // Vapor a subir da superfície (mais vapor com mais sol)
+    // Vapor a sair da chaminé (mais vapor com mais sol)
     if (this.nivel > 0 && random() < 3 * sol * dt) {
       this.vapor.push({
-        x: random(this.x + 6, this.x + this.w - 6),
-        y: this.superficieY(),
+        x: this.x + this.w - 15 + random(-3, 3),
+        y: this.y - 36,
         vy: random(0.4, 1.1),
         vida: 1,
         tam: random() < 0.5 ? 4 : 8
@@ -59,55 +64,124 @@ class Reservatorio {
     return this.nivel <= 0;
   }
 
-  // Cheio: já não cabe (quase) nada; a água que chegar é desperdiçada
   cheio() {
-    return this.nivel >= this.capacidade - 0.5;
+    return this.nivel >= this.capacidade - 0.01;
   }
 
-  superficieY() {
-    return this.y + this.h - (this.nivel / this.capacidade) * this.h;
-  }
+  // ---------- Desenho ----------
 
-  // aviso = true faz a moldura piscar a vermelho (cheio e a chover)
-  mostrar(aviso = false) {
+  mostrar() {
     noStroke();
+    const { x, y, w, h, janela: j } = this;
+    const pisca = floor(millis() / 250) % 2 === 0;
+    const cheio = this.cheio();
+    const vazio = this.vazio();
 
-    // Título
-    textAlign(CENTER, CENTER);
-    textSize(11);
-    fill(0);
-    text('RESERVATÓRIO', this.x + this.w / 2, this.y - 12);
+    // Plataforma de terra (mesmas cores do chão da aldeia)
+    fill(150, 100, 60);
+    rect(x - 10, y + h, w + 20, 12);
+    fill(125, 82, 48);
+    rect(x - 10, y + h, w + 20, 4);
 
-    // Fundo do depósito
+    // Paredes (mesma cor das casas) com juntas de tijolo
+    fill(205, 160, 105);
+    rect(x, y, w, h);
+    fill(185, 140, 90);
+    for (let ty = y + 24; ty < y + h; ty += 24) rect(x, ty, w, 2);
+
+    // Telhado (mesma cor e forma das casas) e chaminé do vapor
+    fill(90, 55, 30);
+    rect(x + w - 20, y - 38, 10, 20);
+    fill(160, 70, 45);
+    triangle(x - 6, y, x + w / 2, y - 50, x + w + 6, y);
+
+    // Moldura da janela (pisca quando está cheio ou vazio)
+    if ((cheio || vazio) && pisca) {
+      fill(vazio ? color(220, 50, 40) : color(255, 220, 60));
+    } else {
+      fill(90, 55, 30);
+    }
+    rect(j.x - 4, j.y - 4, j.w + 8, j.h + 8);
+
+    // Interior da janela
     fill(30, 40, 60);
-    rect(this.x, this.y, this.w, this.h);
+    rect(j.x, j.y, j.w, j.h);
 
-    // Água (fica vermelha quando está quase a secar)
-    const topo = this.superficieY();
-    const baixo = this.nivel / this.capacidade < 0.2;
-    fill(baixo ? color(230, 90, 70) : color(70, 150, 255));
-    rect(this.x, topo, this.w, this.y + this.h - topo);
-    fill(baixo ? color(250, 160, 140) : color(190, 225, 255));
-    rect(this.x, topo, this.w, 4);
+    // Água visível na janela (fica vermelha quando está quase a secar)
+    const fracao = constrain(this.nivel / this.capacidade, 0, 1);
+    const topo = j.y + j.h - fracao * j.h;
+    const baixo = fracao < 0.2;
+    if (fracao > 0) {
+      fill(baixo ? color(230, 90, 70) : color(70, 150, 255));
+      rect(j.x, topo, j.w, j.y + j.h - topo);
+      fill(baixo ? color(250, 160, 140) : color(190, 225, 255));
+      rect(j.x, topo, j.w, 4);
+    }
 
     // Marcas de 10 em 10 litros
     fill(255, 255, 255, 90);
     for (let l = 10; l < this.capacidade; l += 10) {
-      const y = this.y + this.h - (l / this.capacidade) * this.h;
-      rect(this.x, y, 10, 2);
+      rect(j.x, j.y + j.h - (l / this.capacidade) * j.h, 8, 2);
     }
 
-    // Moldura
-    noFill();
-    stroke(aviso && floor(millis() / 250) % 2 === 0 ? color(255, 60, 60) : color(0));
-    strokeWeight(3);
-    rect(this.x, this.y, this.w, this.h);
-    noStroke();
+    // Estado vazio: fundo seco e rachado
+    if (vazio) {
+      stroke(110, 70, 40);
+      strokeWeight(2);
+      line(j.x + 6, j.y + j.h - 2, j.x + 18, j.y + j.h - 16);
+      line(j.x + 18, j.y + j.h - 16, j.x + 14, j.y + j.h - 28);
+      line(j.x + 30, j.y + j.h - 2, j.x + 38, j.y + j.h - 20);
+      noStroke();
+    }
 
-    // Litros no reservatório
-    textSize(13);
+    // Texto dentro da janela nos estados cheio / vazio
+    textAlign(CENTER, CENTER);
+    textSize(11);
+    if (cheio) {
+      fill(0);
+      text('CHEIO!', j.x + j.w / 2 + 1, j.y + 15);
+      fill(255, 230, 80);
+      text('CHEIO!', j.x + j.w / 2, j.y + 14);
+    } else if (vazio) {
+      fill(255, 90, 70);
+      text('VAZIO', j.x + j.w / 2, j.y + j.h / 2);
+    }
+
+    // Cheio: água a transbordar pela parede (aviso de desperdício)
+    if (cheio) {
+      fill(70, 150, 255);
+      for (let k = 0; k < 3; k++) {
+        const yy = y + 4 + ((millis() / 6 + k * 70) % (h - 8));
+        rect(x + w - 6, yy, 4, 8);
+      }
+    }
+
+    // Porta (como as casas)
+    fill(90, 55, 30);
+    rect(x + w / 2 - 9, y + h - 30, 18, 30);
+
+    // Torneira com pingo (só pinga se ainda há água)
+    fill(80, 80, 90);
+    rect(x - 10, y + h - 52, 20, 8);
+    rect(x - 10, y + h - 52, 8, 16);
+    if (this.nivel > 0) {
+      fill(70, 150, 255);
+      rect(x - 8, y + h - 34 + ((millis() / 8) % 30), 4, 6);
+    }
+
+    // Nome e litros por baixo da estrutura
+    textAlign(CENTER, CENTER);
+    textSize(11);
     fill(0);
-    text(ceil(this.nivel) + ' / ' + this.capacidade + ' L', this.x + this.w / 2, this.y + this.h + 16);
+    text('RESERVATÓRIO', x + w / 2, y + h + 26);
+    textSize(13);
+    if (cheio && pisca) {
+      fill(200, 30, 30);
+      text('DESPERDÍCIO!', x + w / 2, y + h + 44);
+    } else {
+      fill(0);
+      text(ceil(this.nivel) + ' / ' + this.capacidade + ' L', x + w / 2, y + h + 44);
+    }
 
     // Vapor (evaporação visível)
     for (const v of this.vapor) {
