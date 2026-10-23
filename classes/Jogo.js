@@ -61,6 +61,25 @@ const DIFICULDADES = {
   }
 };
 
+// Dicas reais de poupança de água, mostradas no ecrã de Resultado.
+// O tema liga a dica ao que aconteceu no jogo:
+//   'evaporacao' -> quando o reservatório secou
+//   'desperdicio' -> quando houve água desperdiçada
+//   'geral'      -> nos restantes casos
+const DICAS = [
+  { tema: 'evaporacao', texto: 'Rega ao amanhecer ou ao fim do dia: com menos sol, evapora-se menos água.' },
+  { tema: 'evaporacao', texto: 'Tapar reservatórios e cisternas reduz a água que se perde por evaporação.' },
+  { tema: 'evaporacao', texto: 'Cobrir o solo das plantas com palha ou casca de pinheiro mantém a humidade.' },
+  { tema: 'desperdicio', texto: 'Uma fuga numa torneira ou num autoclismo desperdiça muita água sem se notar. Repara-a!' },
+  { tema: 'desperdicio', texto: 'Apanha a água da chuva e reutiliza-a para regar as plantas.' },
+  { tema: 'desperdicio', texto: 'Usa a máquina de lavar só com a carga cheia: poupas água e energia.' },
+  { tema: 'geral', texto: 'Fecha a torneira enquanto lavas os dentes ou ensaboas as mãos.' },
+  { tema: 'geral', texto: 'Um duche rápido gasta menos água do que um banho de imersão.' },
+  { tema: 'geral', texto: 'Lava o carro com um balde em vez de usar a mangueira.' },
+  { tema: 'geral', texto: 'Reutiliza a água de lavar os legumes para regar as plantas.' },
+  { tema: 'geral', texto: 'Num autoclismo com dupla descarga, usa a descarga pequena sempre que possível.' }
+];
+
 class Jogo {
   constructor() {
     // Estados possíveis: 'inicio', 'execucao', 'resultado'
@@ -80,7 +99,9 @@ class Jogo {
     this.litrosRecolhidos = 0;
     this.litrosDesperdicados = 0;
     this.vidas = 3;
-    this.motivoFim = '';     // 'tempo' ou 'vidas'
+    this.motivoFim = '';     // 'tempo', 'vidas' ou 'reservatorio'
+    this.tempoJogado = 0;    // segundos jogados (para o Resultado)
+    this.dica = '';          // dica de poupança escolhida no fim do jogo
 
     // Botões do ecrã de início (x, y, largura, altura, texto)
     this.botoesDificuldade = [
@@ -89,6 +110,10 @@ class Jogo {
       { id: 'dificil', x: 490, y: 345, w: 140, h: 40, texto: 'DIFÍCIL' }
     ];
     this.botaoComecar = { x: 280, y: 415, w: 240, h: 54, texto: 'COMEÇAR' };
+
+    // Botões do ecrã de resultado
+    this.botaoRepetir = { x: 150, y: 470, w: 280, h: 50, texto: 'JOGAR OUTRA VEZ' };
+    this.botaoMenu = { x: 450, y: 470, w: 200, h: 50, texto: 'MENU' };
 
     // Objetos do jogo
     this.microfone = new Microfone();
@@ -115,6 +140,8 @@ class Jogo {
     this.litrosRecolhidos = 0;
     this.litrosDesperdicados = 0;
     this.motivoFim = '';
+    this.tempoJogado = 0;
+    this.dica = '';
 
     this.microfone.definirMargens(this.config.margemMin, this.config.margemMax);
     this.microfone.iniciar();   // só calibra na primeira vez
@@ -128,6 +155,17 @@ class Jogo {
 
   terminar() {
     this.estado = 'resultado';
+    this.tempoJogado = this.duracao - this.tempoRestante;
+    this.dica = this.escolherDica();
+  }
+
+  // Escolhe uma dica ligada ao que aconteceu (fica fixa durante o ecrã de resultado)
+  escolherDica() {
+    let tema = 'geral';
+    if (this.motivoFim === 'reservatorio') tema = 'evaporacao';
+    else if (this.litrosDesperdicados > 0) tema = 'desperdicio';
+    const pool = DICAS.filter(d => d.tema === tema);
+    return random(pool).texto;
   }
 
   voltarAoInicio() {
@@ -156,7 +194,8 @@ class Jogo {
       }
 
       // Chove quando a histerese do microfone está ativa
-      const chovendo = this.microfone.aFalar;
+      // (provisório: ESPAÇO também faz chover, para testar sem microfone)
+      const chovendo = this.microfone.aFalar || keyIsDown(32);
 
       const novaGota = this.nuvem.atualizar(chovendo);
       if (novaGota) this.gotas.push(novaGota);
@@ -168,7 +207,7 @@ class Jogo {
 
       // Bolhas de evaporação sobem do chão; com mais sol aparecem mais depressa
       if (millis() >= this.proximaBolha) {
-        this.gotas.push(new Gota(random(110, 685), height - 30, 'bolha'));
+        this.gotas.push(new Gota(random(110, 700), height - 30, 'bolha'));
         this.proximaBolha = millis() + random(this.config.intervaloBolhas[0], this.config.intervaloBolhas[1]) / sol;
       }
 
@@ -303,7 +342,23 @@ class Jogo {
     rect(640, 79, 14, 12);
     rect(756, 79, 14, 12);
 
-    this.desenharChao();
+    // Chão
+    fill(150, 100, 60);
+    rect(0, 480, width, height - 480);
+    fill(125, 82, 48);
+    rect(0, 480, width, 8);
+
+    // Rachas no chão
+    stroke(100, 62, 34);
+    strokeWeight(3);
+    line(60, 520, 100, 540);
+    line(100, 540, 90, 570);
+    line(250, 505, 290, 525);
+    line(290, 525, 330, 520);
+    line(520, 510, 560, 535);
+    line(560, 535, 550, 565);
+    line(700, 500, 740, 520);
+    noStroke();
 
     // Casas da aldeia (nas laterais)
     this.desenharCasa(25, 410, 90, 70);
@@ -364,7 +419,7 @@ class Jogo {
   // ----- Ecrã de execução -----
 
   desenharExecucao() {
-    this.desenharFundoExecucao();
+    background(135, 195, 235);
 
     // Sol, reservatório (com vapor), gotas, nuvem e balde
     this.desenharSol();
@@ -374,6 +429,11 @@ class Jogo {
     this.balde.mostrar();
 
     this.desenharHUD();
+
+    textAlign(CENTER, CENTER);
+    textSize(16);
+    fill(40);
+    text('(ENTER termina; ESPAÇO faz chover)', width / 2, height / 2 + 120);
 
     this.desenharMedidorVoz();
 
@@ -389,50 +449,12 @@ class Jogo {
     this.desenharAvisoMicrofone();
   }
 
-  // Céu azul, chão rachado e casas da aldeia (o sol e o reservatório são desenhados à parte)
-  desenharFundoExecucao() {
-    noStroke();
-    fill(135, 195, 235);
-    rect(0, 0, width, 200);
-    fill(150, 205, 240);
-    rect(0, 200, width, 150);
-    fill(168, 216, 244);
-    rect(0, 350, width, 130);
-
-    this.desenharChao();
-
-    // Casas (a da esquerda fica de fora para não tapar o medidor de voz e a da
-    // direita dá lugar ao reservatório, que faz parte da aldeia)
-    this.desenharCasa(135, 430, 70, 50);
-    this.desenharCasa(595, 430, 70, 50);
-  }
-
-  // Chão rachado, comum a todos os ecrãs
-  desenharChao() {
-    noStroke();
-    fill(150, 100, 60);
-    rect(0, 480, width, height - 480);
-    fill(125, 82, 48);
-    rect(0, 480, width, 8);
-
-    stroke(100, 62, 34);
-    strokeWeight(3);
-    line(60, 520, 100, 540);
-    line(100, 540, 90, 570);
-    line(250, 505, 290, 525);
-    line(290, 525, 330, 520);
-    line(520, 510, 560, 535);
-    line(560, 535, 550, 565);
-    line(700, 500, 740, 520);
-    noStroke();
-  }
-
   // Sol que fica mais intenso (maior e mais vermelho) ao longo do jogo
   desenharSol() {
     const sol = this.intensidadeSol();
     const t = (sol - 1) / (this.config.solMax - 1 || 1);   // 0 a 1
     const tam = 36 + 34 * t;
-    const cx = 645, cy = 95;
+    const cx = 650, cy = 95;
     const corSol = lerpColor(color(255, 236, 110), color(255, 130, 50), t);
     const corMiolo = lerpColor(color(255, 250, 175), color(255, 200, 110), t);
     const raio = 8 + 8 * t;
@@ -526,8 +548,7 @@ class Jogo {
     const mic = this.microfone;
     if (!mic.ativo) return;
 
-    // Sem painel de fundo; fica à esquerda, na mesma altura de antes (y = 120)
-    const x = 62, y = 120, w = 30, h = 200;
+    const x = 735, y = 120, w = 30, h = 260;
     const escala = max(0.15, mic.limiteMax * 2.5);   // volume que enche o medidor
     const paraY = (v) => y + h - constrain(v / escala, 0, 1) * h;
 
@@ -535,7 +556,7 @@ class Jogo {
     textAlign(CENTER, CENTER);
     textSize(13);
     fill(0);
-    text('VOZ', x + w / 2, y - 16);
+    text('VOZ', x + w / 2, y - 14);
 
     // Fundo e moldura
     fill(30, 40, 60);
@@ -547,17 +568,16 @@ class Jogo {
     rect(x, topo, w, y + h - topo);
 
     // Linhas dos limites
-    fill(230, 50, 50);
+    fill(255, 80, 80);
     rect(x - 6, paraY(mic.limiteMax) - 1, w + 12, 3);
-    fill(40, 180, 80);
+    fill(120, 255, 140);
     rect(x - 6, paraY(mic.limiteMin) - 1, w + 12, 3);
 
-    // Texto escuro, para se ler bem em cima do céu
     textAlign(RIGHT, CENTER);
     textSize(11);
-    fill(170, 30, 30);
+    fill(180, 30, 30);
     text('máx', x - 10, paraY(mic.limiteMax));
-    fill(20, 120, 50);
+    fill(20, 120, 40);
     text('mín', x - 10, paraY(mic.limiteMin));
 
     noFill();
@@ -601,20 +621,19 @@ class Jogo {
     } else if (mic.erro) {
       textSize(14);
       fill(160, 30, 30);
-      text('Microfone indisponível: permite o acesso e recarrega a página', width / 2, height - 50);
+      text('Microfone indisponível: usa ESPAÇO para chover', width / 2, height - 50);
     }
   }
 
   // ----- Ecrã de resultado -----
 
   desenharResultado() {
-    this.desenharCenarioSeca();
-    this.desenharPainel(220, 55, 360, 385);
+    background(30, 60, 90);
 
     textAlign(CENTER, CENTER);
     fill(255);
     textSize(44);
-    text('FIM DE JOGO', width / 2, 100);
+    text('FIM DE JOGO', width / 2, 65);
 
     textSize(18);
     fill(255, 220, 120);
@@ -623,22 +642,39 @@ class Jogo {
       reservatorio: 'O reservatório secou!',
       tempo: 'O tempo acabou!'
     };
-    text(mensagens[this.motivoFim] || '', width / 2, 160);
+    text(mensagens[this.motivoFim] || '', width / 2, 112);
 
+    // Resumo da partida
     textSize(20);
+    fill(200, 225, 255);
+    text('Dificuldade: ' + this.nomeDificuldade(), width / 2, 160);
+    text('Tempo: ' + round(this.tempoJogado) + ' s de ' + this.duracao + ' s', width / 2, 190);
+    text('Litros recolhidos: ' + this.litrosRecolhidos, width / 2, 220);
+    text('Litros desperdiçados: ' + this.litrosDesperdicados, width / 2, 250);
+    text('Litros evaporados: ' + this.reservatorio.litrosEvaporados.toFixed(1), width / 2, 280);
+    text('Vidas restantes: ' + this.vidas, width / 2, 310);
+
+    // Dica real de poupança de água
+    this.desenharPainel(110, 340, 580, 112);
+    textSize(14);
+    fill(255, 220, 120);
+    text('DICA DE POUPANÇA DE ÁGUA', width / 2, 362);
+    textSize(17);
     fill(255);
-    text('Dificuldade: ' + this.nomeDificuldade(), width / 2, 205);
-    text('Litros recolhidos: ' + this.litrosRecolhidos, width / 2, 245);
-    text('Litros desperdiçados: ' + this.litrosDesperdicados, width / 2, 277);
-    text('Vidas restantes: ' + this.vidas, width / 2, 309);
-    text('Litros evaporados: ' + this.reservatorio.litrosEvaporados.toFixed(1), width / 2, 341);
+    textAlign(CENTER, TOP);
+    text(this.dica, 130, 384, 540, 55);
 
-    // Dica real de poupança de água (próxima tarefa)
+    // Repetir (reset completo) ou voltar ao menu
+    this.desenharBotao(this.botaoRepetir, false, true);
+    this.desenharBotao(this.botaoMenu, false);
 
-    if (floor(millis() / 500) % 2 === 0) {
-      textSize(22);
-      fill(120, 255, 160);
-      text('Clica para jogar outra vez', width / 2, 405);
+    textAlign(CENTER, CENTER);
+    textSize(13);
+    fill(200, 225, 255);
+    text('ENTER ou R: jogar outra vez  |  ESC ou M: menu', width / 2, 543);
+
+    if (this.dentro(mouseX, mouseY, this.botaoRepetir) || this.dentro(mouseX, mouseY, this.botaoMenu)) {
+      cursor(HAND);
     }
   }
 
@@ -681,7 +717,8 @@ class Jogo {
         this.iniciar();
       }
     } else if (this.estado === 'resultado') {
-      this.voltarAoInicio();
+      if (this.dentro(mouseX, mouseY, this.botaoRepetir)) this.iniciar();
+      else if (this.dentro(mouseX, mouseY, this.botaoMenu)) this.voltarAoInicio();
     }
   }
 
@@ -691,6 +728,12 @@ class Jogo {
       if (tecla === '2') this.dificuldade = 'normal';
       if (tecla === '3') this.dificuldade = 'dificil';
       if (tecla === 'Enter') this.iniciar();
+    } else if (this.estado === 'resultado') {
+      if (tecla === 'Enter' || tecla === 'r' || tecla === 'R') this.iniciar();
+      if (tecla === 'Escape' || tecla === 'm' || tecla === 'M') this.voltarAoInicio();
+    } else if (this.estado === 'execucao' && tecla === 'Enter') {
+      // Temporário, só para testar a mudança de estados
+      this.terminar();
     }
   }
 }
