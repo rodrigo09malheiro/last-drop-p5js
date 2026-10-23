@@ -100,27 +100,23 @@ Aluno: Rodrigo Fernandes Malheiro (33103) · Sistemas Multimédia 2026-2027
 - Issue #11 (`Reservatorio`): criei a classe com o nível de água, marcas de litros e o texto "X / 50 L" (fica vermelho abaixo de 20%). A água apanhada enche o reservatório.
 - Reservatório cheio: ao chover com o reservatório cheio aparece um aviso a piscar ("Reservatório cheio!"), e a moldura do depósito pisca a vermelho. Os litros desperdiçados contam tanto na água apanhada como na que cai ao chão com o reservatório cheio. Aparecem em "Desp.: X L" por baixo do reservatório e no Resultado.
 - Testei as mecânicas num browser de teste: água ao chão com o reservatório cheio e não cheio, água apanhada com o reservatório cheio, e o aviso a desaparecer quando paro de chover.
-- [Outras atividades de hoje, se houver]
 
 **Problemas:**
-- Erro na consola (`Cannot read properties of null`) ao arrancar o jogo, porque o `iniciar()` falhava antes de criar o reservatório. [Confirma a causa que encontraste.]
+- Erro na consola (`Cannot read properties of null`) ao arrancar o jogo: o `this.reservatorio` estava a `null` porque o `iniciar()` falhava antes de o criar.
 - A evaporação faz o nível baixar sempre, por isso o reservatório quase nunca estava exatamente em 50 L e o "cheio" nunca se verificava.
-- [Outros problemas]
 
 **Solução:**
-- [Como resolveste o erro da consola.]
 - Defini "cheio" com uma pequena folga de 0,5 L (método `cheio()` em `Reservatorio.js`).
 
 **Decisões:**
 - Toda a afinação do equilíbrio do jogo (incluindo a evaporação) fica num só sítio, o objeto `DIFICULDADES`, e não dentro das classes.
 - A água que cai ao chão com o reservatório cheio também conta como desperdício, para chover com o reservatório cheio penalizar o jogador mesmo sem apanhar a gota.
-- [Outras decisões]
 
 ### Utilização de IA (Sessão 4)
 
 | Ferramenta | Finalidade | Resultado utilizado | Alterações/decisões do estudante |
 |---|---|---|---|
-| Claude (Anthropic) | Acrescentar o aviso de reservatório cheio e o desperdício da água que cai ao chão, e testar as mecânicas num browser de teste | Alterações em `Jogo.js` e `Reservatorio.js` (`cheio()`, `desenharAvisoCheio()`, `desenharDesperdicio()`) | Decidi que a água ao chão também conta como desperdício, copiei os ficheiros para o projeto e confirmei no browser. [Se o resto também teve ajuda de IA, acrescenta aqui.] |
+| Claude (Anthropic) | Acrescentar o aviso de reservatório cheio e o desperdício da água que cai ao chão, e testar as mecânicas num browser de teste | Alterações em `Jogo.js` e `Reservatorio.js` (`cheio()`, `desenharAvisoCheio()`, `desenharDesperdicio()`) | Decidi que a água ao chão também conta como desperdício, copiei os ficheiros para o projeto e confirmei no browser. |
 
 ## Sessão 5 – 22 de outubro de 2026
 
@@ -129,6 +125,7 @@ Aluno: Rodrigo Fernandes Malheiro (33103) · Sistemas Multimédia 2026-2027
 **Atividades realizadas:**
 - Reposicionamento do reservatório e medidor: o reservatório foi integrado no nível do chão da aldeia à direita (`y = 480`), e o medidor de voz foi colocado à esquerda na mesma altitude, perdendo o painel de fundo escuro para ficar mais integrado no cenário.
 - Correção de visibilidade: as linhas/cintas do balde foram redesenhadas por último e com cores escuras para se destacarem perfeitamente sobre o corpo do balde.
+- Acabamento em pixel art: o reservatório passou a ter um desenho em pixel art no estilo das casas, com estados cheio e vazio, e retoquei o balde, a nuvem e o resto do visual.
 - Calibração automática do microfone: implementada a calibração automática sempre que uma nova partida é iniciada ou repetida.
 - Limpeza de interface e sobreposições: ajuste das posições das casas e elementos do HUD (como o sol, nuvem e medidor) para evitar que se sobrepusessem, e atualização das mensagens de ajuda e controlo para focar totalmente na interação por voz.
 - Testes das alterações visuais e mecânicas no browser de teste e preparação/envio dos commits correspondentes para o repositório GitHub (`rodrigo09malheiro/last-drop-p5js.git`).
@@ -151,3 +148,31 @@ Aluno: Rodrigo Fernandes Malheiro (33103) · Sistemas Multimédia 2026-2027
 | Ferramenta | Finalidade | Resultado utilizado | Alterações/decisões do estudante |
 |---|---|---|---|
 | Claude (Anthropic) | Ajustar a posição do reservatório para o nível do chão, remover o painel do medidor de voz, corrigir as linhas do balde e automatizar a calibração do microfone | Alterações de código nos ficheiros `Jogo.js`, `Reservatorio.js` e `Balde.js` | Analisei as propostas, apliquei e testei os ficheiros no projeto, e validei o comportamento visual e interativo antes de preparar os commits. |
+
+## Sessão 6 – 23 de outubro de 2026
+
+**Objetivo:** Fechar o jogo para a entrega: ecrã de Resultado completo com dica de poupança de água, opção de repetir, README final e diário atualizado.
+
+**Atividades realizadas:**
+- Ecrã de Resultado: mostra a dificuldade, o tempo jogado, os litros recolhidos, desperdiçados e evaporados e as vidas restantes.
+- Dica real de poupança de água no ecrã final (`DICAS` em `Jogo.js`), escolhida conforme o que aconteceu: dicas sobre evaporação quando o reservatório secou, sobre desperdício quando houve água desperdiçada e dicas gerais nos restantes casos.
+- Botões "JOGAR OUTRA VEZ" e "MENU" no ecrã de Resultado, com atalhos de teclado (`Enter`/`R` e `Esc`/`M`).
+- A calibração do microfone acontece no início de cada partida.
+- Redigi o README final (estado, funcionalidades, estrutura, como executar e créditos) e atualizei o `DIARIO.md` com as sessões em falta (issues #20 e #19).
+
+**Problemas:**
+- O README estava desatualizado: ainda dizia "fase inicial", indicava uma calibração de ~4 s (são 3 s) e uma versão errada da p5.sound.
+- Os sons planeados (chuva, recolha, aviso, música) não ficaram implementados, e a pasta `assets/sounds/` está vazia.
+
+**Solução:**
+- Reescrevi o README a partir do código do projeto e registei nele, de forma explícita, o que não foi implementado (sons) e como o microfone é lido (Web Audio API em vez da p5.sound).
+
+**Decisões:**
+- O feedback do jogo fica só visual nesta versão, sem sons.
+- A dica final depende do que aconteceu na partida, para ligar o resultado a um conselho real de poupança de água.
+
+### Utilização de IA (Sessão 6)
+
+| Ferramenta | Finalidade | Resultado utilizado | Alterações/decisões do estudante |
+|---|---|---|---|
+| Claude (Anthropic) | Redigir o README final a partir do código do projeto e atualizar o `DIARIO.md` com as sessões em falta | `README.md` final e entradas do diário | Revi os textos, confirmei o estado real do jogo e decidi deixar os sons de fora. |
