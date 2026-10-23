@@ -34,7 +34,12 @@ class Microfone {
   // Usa a Web Audio API diretamente: a p5.sound 2.x já não aceita callbacks
   // no AudioIn.start() e o getLevel() foi substituído.
   iniciar() {
-    if (this.ativo || this.erro || this.pendente) return;
+    // Microfone já a funcionar: em cada nova partida calibra outra vez
+    if (this.ativo) {
+      this.recalibrar();
+      return;
+    }
+    if (this.erro || this.pendente) return;
     this.pendente = true;
 
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -70,6 +75,16 @@ class Microfone {
         this.pendente = false;
         this.erro = true;
       });
+  }
+
+  // Volta a medir o ruído ambiente (chamado no início de cada partida)
+  recalibrar() {
+    this.calibrando = true;
+    this.inicioCalibracao = millis();
+    this.somaRuido = 0;
+    this.amostras = 0;
+    this.aFalar = false;
+    this.nivel = this.lerVolume();   // não arrastar o volume da partida anterior
   }
 
   // Volume atual (RMS, 0 a 1)
