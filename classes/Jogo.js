@@ -505,11 +505,6 @@ class Jogo {
     rect(cx - 5, cy + tam / 2 + 2, 10, raio - 2);
     rect(cx - tam / 2 - raio, cy - 5, raio - 2, 10);
     rect(cx + tam / 2 + 2, cy - 5, raio - 2, 10);
-
-    textAlign(CENTER, CENTER);
-    textSize(13);
-    fill(0);
-    text('SOL x' + sol.toFixed(1), cx, cy + 56);
   }
 
   // Intensidade do sol: 1 no início e solMax no fim do tempo
