@@ -251,11 +251,14 @@ class Jogo {
             this.balde.avisar();
           } else {
             this.litrosRecolhidos++; // água boa
-            // Reservatório cheio: a água que sobra é desperdício
+            // Reservatório cheio: a água que sobra é desperdício (a que cai ao chão
+            // sem ser apanhada é contada mais abaixo, em foraDoEcra)
             this.litrosDesperdicados += this.reservatorio.adicionar(1);
           }
           this.gotas.splice(i, 1);
         } else if (g.foraDoEcra()) {
+          // Água boa que cai ao chão sem ser apanhada também é desperdício
+          if (g.tipo === 'agua') this.litrosDesperdicados += 1;
           this.gotas.splice(i, 1);
         }
       }
@@ -435,7 +438,7 @@ class Jogo {
 
     // Sol, reservatório (com vapor), gotas, nuvem e balde
     this.desenharSol();
-    this.reservatorio.mostrar(this.avisoCheio);
+    this.reservatorio.mostrar(this.avisoCheio, this.litrosDesperdicados);
     for (const g of this.gotas) g.mostrar();
     this.nuvem.mostrar();
     this.balde.mostrar();
@@ -546,6 +549,10 @@ class Jogo {
     // Litros perdidos por evaporação
     fill(255, 170, 120);
     text('Evap.: ' + this.reservatorio.litrosEvaporados.toFixed(1) + ' L', 205, 21);
+
+    // Litros desperdiçados (água ao chão + água que sobra com o reservatório cheio)
+    fill(255, 130, 130);
+    text('Desperd.: ' + this.litrosDesperdicados.toFixed(1) + ' L', 480, 21);
     textSize(18);
 
     // Tempo (fica vermelho nos últimos 10 segundos)
@@ -728,7 +735,7 @@ class Jogo {
     text('Dificuldade: ' + this.nomeDificuldade(), width / 2, 155);
     text('Tempo: ' + round(this.tempoJogado) + ' s de ' + this.duracao + ' s', width / 2, 185);
     text('Litros recolhidos: ' + this.litrosRecolhidos, width / 2, 215);
-    text('Litros desperdiçados: ' + this.litrosDesperdicados, width / 2, 245);
+    text('Litros desperdiçados: ' + this.litrosDesperdicados.toFixed(1), width / 2, 245);
     text('Litros evaporados: ' + this.reservatorio.litrosEvaporados.toFixed(1), width / 2, 275);
     text('Vidas restantes: ' + this.vidas, width / 2, 305);
 
