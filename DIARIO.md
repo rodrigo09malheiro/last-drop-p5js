@@ -176,3 +176,36 @@ Aluno: Rodrigo Fernandes Malheiro (33103) · Sistemas Multimédia 2026-2027
 | Ferramenta | Finalidade | Resultado utilizado | Alterações/decisões do estudante |
 |---|---|---|---|
 | Claude (Anthropic) | Redigir o README final a partir do código do projeto e atualizar o `DIARIO.md` com as sessões em falta | `README.md` final e entradas do diário | Revi os textos, confirmei o estado real do jogo e decidi deixar os sons de fora. |
+
+## Sessão 7 – 24 de outubro de 2026
+
+**Objetivo:** Concluir as tarefas pendentes de refinamento do jogo (calibração do microfone por partida, litros desperdiçados no HUD com décimas, aviso de reservatório cheio melhorado, medidor de voz reposicionado, remoção do texto do sol, telhados em pixel art, bolhas e refatoração/limpeza de código), preparar a documentação final e efetuar a entrega do projeto.
+
+**Atividades realizadas:**
+- Implementei a calibração do microfone no início de cada partida (quer ao iniciar pelo menu, quer ao repetir via botão ou tecla R), bloqueando o arranque do tempo e da chuva até a calibração terminar.
+- Adicionei a contagem correta e a visualização dos litros desperdiçados (água boa que cai ao chão e excessos de capacidade) no HUD com arredondamento às décimas (ex.: 10.5 L) e no ecrã de Resultado, removendo o duplicado junto ao reservatório.
+- Melhorei o aviso de reservatório cheio, tornando-o mais chamativo, intermitente (piscar rápido em cores fortes) e associado a um destaque visual no telhado, janela e placa do reservatório enquanto se sopra/fala.
+- Reajustámos a posição vertical do medidor de voz para o ponto médio exato entre a nuvem e o chão, evitando sobreposições com elementos da UI.
+- Removi o texto estático “Sol x1.n” do HUD, mantendo o crescimento progressivo do sol no cenário e reorganizando o espaço visual.
+- Redesenhei todos os telhados (das casas da aldeia e do reservatório) utilizando blocos de pixel art em degraus em vez de triângulos vetoriais simples.
+- Atualizei a lógica das dicas de poupança para serem selecionadas aleatoriamente entre as 11 opções disponíveis, mantendo-as fixas durante o ecrã de Resultado.
+- Conduzi uma revisão exaustiva do código base para garantir a consistência de nomes, adicionar comentários descritivos em todas as funções e verificar a ausência de código morto ou logs órfãos.
+
+**Problemas:**
+- O contador de litros desperdiçados original apenas contabilizava o excesso ao encher o reservatório, ignorando a água que caía diretamente ao chão.
+- O aviso de depósito cheio desaparecia instantaneamente devido à oscilação da evaporação logo no frame seguinte.
+- Dificuldade inicial em manter a estabilidade do microfone e a calibração em ciclos repetidos de jogo.
+
+**Solução:**
+- Passei a somar o desperdício por queda direta e criei uma tolerância temporal (0,6 segundos) para o estado de cheio do reservatório.
+- Centralizei a calibração numa função síncrona logo antes do arranque do loop principal de cada partida e seccionámos as regras de dificuldade.
+
+**Decisões:**
+- Manter o contador de desperdício exclusivamente no HUD superior para evitar poluição visual junto ao reservatório.
+- Tornar as dicas de poupança independentes do resultado numérico do jogador para dinamizar a reJOGABILIDADE.
+
+### Utilização de IA (Sessão 7)
+
+| Ferramenta | Finalidade | Resultado utilizado | Alterações/decisões do estudante |
+|---|---|---|---|
+| Claude (Anthropic) | Apoio na implementação das issues #18 a #27, reestruturação visual de telhados e HUD, cálculo de posições do medidor de voz e geração do diário final. | Snippets de código para as classes (`Jogo`, `Reservatorio`, `Microfone`), lógica de cálculo de médias e estrutura em Markdown do diário. | Validei os pedaços de código adaptados ao projeto, testei comportamentos localmente e procedi aos envios finais via Git. |
