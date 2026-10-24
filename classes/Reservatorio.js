@@ -65,16 +65,21 @@ class Reservatorio {
     return this.nivel <= 0;
   }
 
+  // Cheio = já não cabe mais um litro inteiro (a água que chegar é desperdiçada).
+  // A folga de 1 L evita que a evaporação "apague" o estado a cada frame.
   cheio() {
-    return this.nivel >= this.capacidade - 0.01;
+    return this.nivel > this.capacidade - 1;
   }
 
   // ---------- Desenho ----------
 
-  mostrar() {
+  // aviso = true quando se chove com o reservatório cheio: telhado, janela e placa
+  // piscam depressa (o aviso grande é desenhado pelo Jogo)
+  mostrar(aviso = false) {
     noStroke();
     const { x, y, w, h, janela: j } = this;
     const pisca = floor(millis() / 250) % 2 === 0;
+    const rapido = floor(millis() / 120) % 2 === 0;   // pisca depressa no aviso
     const cheio = this.cheio();
     const vazio = this.vazio();
 
@@ -87,12 +92,17 @@ class Reservatorio {
     // Telhado em pixel art (mesma cor das casas) e chaminé do vapor
     fill(90, 55, 30);
     rect(x + w - 20, y - 38, 10, 20);
-    fill(160, 70, 45);
+    fill(aviso && rapido ? color(235, 50, 40) : color(160, 70, 45));
     desenharTelhado(x, y, w, 50);
 
-    // Moldura da janela (pisca quando está cheio ou vazio)
-    if ((cheio || vazio) && pisca) {
-      fill(vazio ? color(220, 50, 40) : color(255, 220, 60));
+    // Moldura da janela: pisca depressa no aviso de cheio, fica amarela quando está
+    // cheio (sem chover) e pisca a vermelho quando está vazio
+    if (aviso) {
+      fill(rapido ? color(255, 60, 50) : color(255, 220, 60));
+    } else if (vazio && pisca) {
+      fill(220, 50, 40);
+    } else if (cheio) {
+      fill(255, 220, 60);
     } else {
       fill(90, 55, 30);
     }
@@ -164,17 +174,25 @@ class Reservatorio {
       rect(x - 8, y + h - 34 + ((millis() / 8) % 30), 4, 6);
     }
 
-    // Nome e litros por cima do telhado (por baixo está o chão, onde anda o balde)
+    // Placa por cima do telhado (por baixo está o chão, onde anda o balde)
     textAlign(CENTER, CENTER);
-    textSize(11);
-    fill(0);
-    text('RESERVATÓRIO', x + w / 2, y - 76);
-    textSize(13);
-    if (cheio && pisca) {
-      fill(200, 30, 30);
-      text('DESPERDÍCIO!', x + w / 2, y - 60);
+    if (aviso) {
+      // Aviso: placa a piscar com CHEIO! e DESPERDÍCIO
+      fill(25, 18, 14);
+      rect(x - 15, y - 89, w + 30, 40);
+      fill(rapido ? color(235, 40, 40) : color(255, 200, 40));
+      rect(x - 12, y - 86, w + 24, 34);
+      fill(rapido ? color(255) : color(120, 20, 10));
+      textSize(17);
+      text('CHEIO!', x + w / 2, y - 76);
+      textSize(11);
+      text('DESPERDÍCIO', x + w / 2, y - 59);
     } else {
+      // Normal: nome e litros
+      textSize(11);
       fill(0);
+      text('RESERVATÓRIO', x + w / 2, y - 76);
+      textSize(13);
       text(ceil(this.nivel) + ' / ' + this.capacidade + ' L', x + w / 2, y - 60);
     }
 

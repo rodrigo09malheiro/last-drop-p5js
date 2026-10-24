@@ -122,6 +122,8 @@ class Jogo {
     this.motivoFim = '';     // 'tempo', 'vidas' ou 'reservatorio'
     this.tempoJogado = 0;    // segundos jogados (para o Resultado)
     this.dica = '';          // dica de poupança escolhida no fim do jogo
+    this.avisoCheio = false; // true enquanto se chove com o reservatório cheio
+    this.avisoAte = 0;       // ms até quando o aviso se mantém (evita piscar com a evaporação)
 
     // Botões do ecrã de início (x, y, largura, altura, texto)
     this.botoesDificuldade = [
@@ -162,6 +164,8 @@ class Jogo {
     this.motivoFim = '';
     this.tempoJogado = 0;
     this.dica = '';
+    this.avisoCheio = false;
+    this.avisoAte = 0;
 
     this.microfone.definirMargens(this.config.margemMin, this.config.margemMax);
     this.microfone.iniciar();   // calibra sempre (1.ª vez e em cada repetição)
@@ -223,6 +227,11 @@ class Jogo {
       const sol = this.intensidadeSol();
       const dt = min(deltaTime, 100) / 1000;
       this.reservatorio.atualizar(dt, sol);
+
+      // Aviso de reservatório cheio: aparece ao chover com ele cheio, fica ~0,6 s para
+      // não piscar quando a evaporação baixa o nível, e some logo que se pára de chover
+      if (chovendo && this.reservatorio.cheio()) this.avisoAte = millis() + 600;
+      this.avisoCheio = chovendo && millis() < this.avisoAte;
 
       // Bolhas de evaporação sobem do chão; com mais sol aparecem mais depressa
       if (millis() >= this.proximaBolha) {
@@ -426,7 +435,7 @@ class Jogo {
 
     // Sol, reservatório (com vapor), gotas, nuvem e balde
     this.desenharSol();
-    this.reservatorio.mostrar();
+    this.reservatorio.mostrar(this.avisoCheio);
     for (const g of this.gotas) g.mostrar();
     this.nuvem.mostrar();
     this.balde.mostrar();
@@ -434,6 +443,7 @@ class Jogo {
     this.desenharHUD();
 
     this.desenharMedidorVoz();
+    this.desenharAvisoCheio();
 
     if (this.fimPendente) {
       textAlign(CENTER, CENTER);
@@ -622,6 +632,36 @@ class Jogo {
     strokeWeight(2);
     rect(x, y, w, h);
     noStroke();
+  }
+
+  // Aviso grande e a piscar quando se chove com o reservatório cheio
+  // (a água extra é desperdiçada). Desaparece assim que se pára de chover.
+  desenharAvisoCheio() {
+    if (!this.avisoCheio) return;
+    const rapido = floor(millis() / 120) % 2 === 0;   // pisca depressa
+    noStroke();
+
+    // Moldura vermelha/amarela à volta da zona de jogo (entre o HUD e o rodapé)
+    fill(rapido ? color(235, 40, 40, 200) : color(255, 190, 40, 200));
+    rect(0, 44, width, 8);
+    rect(0, height - 34, width, 8);
+    rect(0, 44, 8, height - 78);
+    rect(width - 8, 44, 8, height - 78);
+
+    // Faixa central com a mensagem
+    const w = 520, h = 70, x = width / 2 - w / 2, y = 150;
+    fill(25, 18, 14);
+    rect(x - 5, y - 5, w + 10, h + 10);
+    fill(rapido ? color(210, 35, 35, 240) : color(255, 200, 40, 240));
+    rect(x, y, w, h);
+
+    textAlign(CENTER, CENTER);
+    textSize(34);
+    fill(rapido ? color(255) : color(120, 20, 10));
+    text('RESERVATÓRIO CHEIO!', width / 2, y + 28);
+    textSize(16);
+    fill(rapido ? color(255, 230, 200) : color(60, 30, 10));
+    text('Pára de falar: a água é desperdiçada!', width / 2, y + 55);
   }
 
   // Mensagem enquanto o microfone pede permissão, calibra ou falha
