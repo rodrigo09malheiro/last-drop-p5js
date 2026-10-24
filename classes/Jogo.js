@@ -62,22 +62,19 @@ const DIFICULDADES = {
 };
 
 // Dicas reais de poupança de água, mostradas no ecrã de Resultado.
-// O tema liga a dica ao que aconteceu no jogo:
-//   'evaporacao'  -> quando o reservatório secou
-//   'desperdicio' -> quando houve água desperdiçada
-//   'geral'       -> nos restantes casos
+// A dica é escolhida ao acaso e não depende do resultado do jogo.
 const DICAS = [
-  { tema: 'evaporacao', texto: 'Rega ao amanhecer ou ao fim do dia: com menos sol, evapora-se menos água.' },
-  { tema: 'evaporacao', texto: 'Tapar reservatórios e cisternas reduz a água que se perde por evaporação.' },
-  { tema: 'evaporacao', texto: 'Cobrir o solo das plantas com palha ou casca de pinheiro mantém a humidade.' },
-  { tema: 'desperdicio', texto: 'Uma fuga numa torneira ou num autoclismo desperdiça muita água sem se notar. Repara-a!' },
-  { tema: 'desperdicio', texto: 'Apanha a água da chuva e reutiliza-a para regar as plantas.' },
-  { tema: 'desperdicio', texto: 'Usa a máquina de lavar só com a carga cheia: poupas água e energia.' },
-  { tema: 'geral', texto: 'Fecha a torneira enquanto lavas os dentes ou ensaboas as mãos.' },
-  { tema: 'geral', texto: 'Um duche rápido gasta menos água do que um banho de imersão.' },
-  { tema: 'geral', texto: 'Lava o carro com um balde em vez de usar a mangueira.' },
-  { tema: 'geral', texto: 'Reutiliza a água de lavar os legumes para regar as plantas.' },
-  { tema: 'geral', texto: 'Num autoclismo com dupla descarga, usa a descarga pequena sempre que possível.' }
+  'Rega ao amanhecer ou ao fim do dia: com menos sol, evapora-se menos água.',
+  'Tapar reservatórios e cisternas reduz a água que se perde por evaporação.',
+  'Cobrir o solo das plantas com palha ou casca de pinheiro mantém a humidade.',
+  'Uma fuga numa torneira ou num autoclismo desperdiça muita água sem se notar. Repara-a!',
+  'Apanha a água da chuva e reutiliza-a para regar as plantas.',
+  'Usa a máquina de lavar só com a carga cheia: poupas água e energia.',
+  'Fecha a torneira enquanto lavas os dentes ou ensaboas as mãos.',
+  'Um duche rápido gasta menos água do que um banho de imersão.',
+  'Lava o carro com um balde em vez de usar a mangueira.',
+  'Reutiliza a água de lavar os legumes para regar as plantas.',
+  'Num autoclismo com dupla descarga, usa a descarga pequena sempre que possível.'
 ];
 
 // Telhado em pixel art: feito com degraus de quadrados (em vez de triangle()).
@@ -183,13 +180,9 @@ class Jogo {
     this.dica = this.escolherDica();
   }
 
-  // Escolhe uma dica ligada ao que aconteceu (fica fixa durante o ecrã de resultado)
+  // Escolhe uma dica ao acaso (fica fixa durante o ecrã de resultado)
   escolherDica() {
-    let tema = 'geral';
-    if (this.motivoFim === 'reservatorio') tema = 'evaporacao';
-    else if (this.litrosDesperdicados > 0) tema = 'desperdicio';
-    const pool = DICAS.filter(d => d.tema === tema);
-    return random(pool).texto;
+    return random(DICAS);
   }
 
   voltarAoInicio() {
@@ -438,7 +431,7 @@ class Jogo {
 
     // Sol, reservatório (com vapor), gotas, nuvem e balde
     this.desenharSol();
-    this.reservatorio.mostrar(this.avisoCheio, this.litrosDesperdicados);
+    this.reservatorio.mostrar(this.avisoCheio);
     for (const g of this.gotas) g.mostrar();
     this.nuvem.mostrar();
     this.balde.mostrar();

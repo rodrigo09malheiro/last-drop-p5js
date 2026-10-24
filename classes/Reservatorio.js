@@ -75,8 +75,7 @@ class Reservatorio {
 
   // aviso = true quando se chove com o reservatório cheio: telhado, janela e placa
   // piscam depressa (o aviso grande é desenhado pelo Jogo)
-  // desperdicio = litros desperdiçados, mostrados por cima da placa (uma casa decimal)
-  mostrar(aviso = false, desperdicio = 0) {
+  mostrar(aviso = false) {
     noStroke();
     const { x, y, w, h, janela: j } = this;
     const pisca = floor(millis() / 250) % 2 === 0;
@@ -196,12 +195,6 @@ class Reservatorio {
       textSize(13);
       text(ceil(this.nivel) + ' / ' + this.capacidade + ' L', x + w / 2, y - 60);
     }
-
-    // Litros desperdiçados, por cima da placa (mais acima quando a placa de aviso aparece)
-    textAlign(CENTER, CENTER);
-    textSize(11);
-    fill(170, 30, 30);
-    text('Desperd.: ' + desperdicio.toFixed(1) + ' L', x + w / 2, aviso ? y - 101 : y - 92);
 
     // Vapor (evaporação visível)
     for (const v of this.vapor) {
