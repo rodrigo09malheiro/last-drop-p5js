@@ -579,8 +579,12 @@ class Jogo {
     const mic = this.microfone;
     if (!mic.ativo) return;
 
-    // Sem painel de fundo; fica à esquerda, na mesma altura de antes (y = 120)
-    const x = 62, y = 120, w = 30, h = 200;
+    // Sem painel de fundo; fica à esquerda, a meio caminho entre a parte de baixo
+    // da nuvem (y + 64, onde nascem as gotas) e o chão (y = 480)
+    const baseNuvem = this.nuvem.y + 64;
+    const chaoY = 480;
+    const x = 62, w = 30, h = 200;
+    const y = round((baseNuvem + chaoY) / 2 - h / 2);
     const escala = max(0.15, mic.limiteMax * 2.5);   // volume que enche o medidor
     const paraY = (v) => y + h - constrain(v / escala, 0, 1) * h;
 
