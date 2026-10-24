@@ -11,7 +11,7 @@ class Nuvem {
     this.velocidade = 1.5;
     this.direcao = 1;
     this.limiteDireito = 500; // a nuvem não passa por cima do sol nem do medidor de voz
-    this.margem = 180;        // distância mínima aos lados (deixa livre o reservatório e o medidor de voz)
+    this.limiteEsquerdo = 180; // a nuvem não passa por cima do medidor de voz
     this.intervaloGotas = 8;  // frames entre gotas
     this.contador = 0;
     this.chovendo = false;
@@ -25,7 +25,7 @@ class Nuvem {
 
     this.x += this.velocidade * this.direcao;
     if (this.x > this.limiteDireito) this.direcao = -1;
-    if (this.x < this.margem) this.direcao = 1;
+    if (this.x < this.limiteEsquerdo) this.direcao = 1;
 
     if (!this.chovendo) {
       this.contador = 0;
@@ -43,6 +43,7 @@ class Nuvem {
     return null;
   }
 
+  // Desenha a nuvem em pixel art (clara quando não chove, cinzenta quando chove)
   mostrar() {
     noStroke();
     // Clara quando não chove, cinzenta quando chove (com sombra por baixo)

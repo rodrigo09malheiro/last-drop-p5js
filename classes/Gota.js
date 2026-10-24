@@ -25,6 +25,8 @@ const BOLHA_PX = 2;                       // desenho de 20 x 20 píxeis
 const BOLHA_HITBOX = 16;                  // colisão um pouco menor que o desenho (2 px de folga)
 
 class Gota {
+  // x, y: posição inicial; tipo: 'agua', 'contaminada' ou 'bolha';
+  // faixaVelocidade: [mínimo, máximo] em píxeis por frame (vem da dificuldade)
   constructor(x, y, tipo = 'agua', faixaVelocidade = [4, 6]) {
     this.x = x;                           // centro
     this.y = y;                           // topo da área de colisão
@@ -35,20 +37,23 @@ class Gota {
     this.velocidade = tipo === 'bolha' ? random(2, 3.5) : random(faixaVelocidade[0], faixaVelocidade[1]);
   }
 
+  // Move a gota: a bolha sobe, as restantes caem
   atualizar() {
     if (this.tipo === 'bolha') this.y -= this.velocidade;
     else this.y += this.velocidade;
   }
 
+  // True quando a gota já saiu do ecrã (a bolha por cima, as outras por baixo)
   foraDoEcra() {
     return this.tipo === 'bolha' ? this.y < -20 : this.y > height;
   }
 
-  // Só a água boa e a contaminada contam como "gota"; a bolha é um perigo
+  // True se apanhar esta gota tira uma vida (contaminada ou bolha)
   eMa() {
     return this.tipo !== 'agua';
   }
 
+  // Desenha a gota (ou a bolha) em pixel art
   mostrar() {
     noStroke();
     if (this.tipo === 'bolha') {

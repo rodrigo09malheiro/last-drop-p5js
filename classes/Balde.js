@@ -8,13 +8,13 @@ class Balde {
     this.altura = 44;
     this.x = width / 2;              // centro do balde
     this.y = height - 26 - 70;       // acima da faixa de identificação
-    this.flash = 0;                  // frames de aviso depois de apanhar algo mau
+    this.framesAviso = 0;            // frames que faltam de aviso (vermelho) depois de apanhar algo mau
   }
 
   // O rato move o balde na horizontal
   atualizar() {
     this.x = constrain(mouseX, this.largura / 2, width - this.largura / 2);
-    if (this.flash > 0) this.flash--;
+    if (this.framesAviso > 0) this.framesAviso--;
   }
 
   // Colisão retângulo-retângulo entre a gota e a boca do balde
@@ -27,15 +27,17 @@ class Balde {
            g.y + g.altura > this.y;
   }
 
+  // Liga o aviso vermelho durante 15 frames (chamado ao apanhar uma gota má ou uma bolha)
   avisar() {
-    this.flash = 15;
+    this.framesAviso = 15;
   }
 
+  // Desenha o balde em pixel art (fica vermelho enquanto o aviso está ativo)
   mostrar() {
     noStroke();
     const x = this.x - this.largura / 2;
     const y = this.y;
-    const mau = this.flash > 0;   // pisca a vermelho quando se apanha algo mau
+    const mau = this.framesAviso > 0;   // pisca a vermelho quando se apanha algo mau
 
     const contorno = color(40, 40, 52);
     const aro      = mau ? color(235, 90, 90)  : color(175, 180, 195);

@@ -112,7 +112,7 @@ class Jogo {
     this.tempoInicio = 0;
     this.tempoRestante = this.duracao;
 
-    // Pontuação (a ligar às colisões e ao reservatório mais tarde)
+    // Pontuação e vidas (os valores iniciais vêm da dificuldade, em iniciar())
     this.litrosRecolhidos = 0;
     this.litrosDesperdicados = 0;
     this.vidas = 3;
@@ -122,7 +122,8 @@ class Jogo {
     this.avisoCheio = false; // true enquanto se chove com o reservatório cheio
     this.avisoAte = 0;       // ms até quando o aviso se mantém (evita piscar com a evaporação)
 
-    // Botões do ecrã de início (x, y, largura, altura, texto)
+    // Botões (retângulos clicáveis): x, y, w = largura, h = altura, texto
+    // Botões do ecrã de início
     this.botoesDificuldade = [
       { id: 'facil',   x: 170, y: 345, w: 140, h: 40, texto: 'FÁCIL' },
       { id: 'normal',  x: 330, y: 345, w: 140, h: 40, texto: 'NORMAL' },
@@ -146,6 +147,8 @@ class Jogo {
 
   // ---------- Controlo de estados ----------
 
+  // Começa uma partida (também usado para repetir): reinicia todo o estado do jogo
+  // com os valores da dificuldade escolhida e recalibra o microfone
   iniciar() {
     this.estado = 'execucao';
 
@@ -174,6 +177,7 @@ class Jogo {
     this.proximaBolha = millis() + this.config.intervaloBolhas[0];
   }
 
+  // Passa ao ecrã de resultado e escolhe a dica de poupança de água
   terminar() {
     this.estado = 'resultado';
     this.tempoJogado = this.duracao - this.tempoRestante;
@@ -185,12 +189,14 @@ class Jogo {
     return random(DICAS);
   }
 
+  // Volta ao menu (a dificuldade escolhida mantém-se)
   voltarAoInicio() {
     this.estado = 'inicio';
   }
 
   // ---------- Atualização (lógica) ----------
 
+  // Lógica de cada frame; só faz alguma coisa durante a execução
   atualizar() {
     if (this.estado === 'execucao') {
       this.microfone.atualizar();
@@ -259,7 +265,7 @@ class Jogo {
       const decorrido = (millis() - this.tempoInicio) / 1000;
       this.tempoRestante = max(0, this.duracao - decorrido);
 
-      // Fim de jogo: vidas a zero ou tempo esgotado
+      // Fim de jogo: vidas a zero, reservatório vazio ou tempo esgotado
       if (this.vidas <= 0) {
         this.motivoFim = 'vidas';
         this.terminar();
@@ -275,6 +281,7 @@ class Jogo {
 
   // ---------- Desenho ----------
 
+  // Desenha o ecrã do estado atual e, por cima, a faixa de identificação
   desenhar() {
     cursor(ARROW);
     switch (this.estado) {
@@ -293,6 +300,7 @@ class Jogo {
 
   // ----- Ecrã de início -----
 
+  // Menu: título, instruções, escolha de dificuldade e botão COMEÇAR
   desenharInicio() {
     this.desenharCenarioSeca();
 
@@ -375,6 +383,7 @@ class Jogo {
     this.desenharCasa(685, 405, 95, 75);
   }
 
+  // Casa da aldeia: parede, telhado em pixel art, porta e janela (x, y = canto superior esquerdo)
   desenharCasa(x, y, w, h) {
     noStroke();
     fill(205, 160, 105);
@@ -387,6 +396,7 @@ class Jogo {
     rect(x + 8, y + 12, 14, 14);
   }
 
+  // Painel escuro semitransparente com linhas amarelas em cima e em baixo
   desenharPainel(x, y, w, h) {
     noStroke();
     fill(25, 18, 14, 215);
@@ -396,6 +406,7 @@ class Jogo {
     rect(x, y + h - 3, w, 3);
   }
 
+  // Botão em pixel art; selecionado = destacado (dificuldade escolhida), principal = verde e maior
   desenharBotao(b, selecionado, principal = false) {
     const hover = this.dentro(mouseX, mouseY, b);
     noStroke();
@@ -426,6 +437,7 @@ class Jogo {
 
   // ----- Ecrã de execução -----
 
+  // Ecrã de jogo: ordem de desenho do fundo para a frente (o que vem depois fica por cima)
   desenharExecucao() {
     this.desenharFundoExecucao();
 
@@ -494,12 +506,12 @@ class Jogo {
   // Sol que fica mais intenso (maior e mais vermelho) ao longo do jogo
   desenharSol() {
     const sol = this.intensidadeSol();
-    const t = (sol - 1) / (this.config.solMax - 1 || 1);   // 0 a 1
-    const tam = 36 + 34 * t;
+    const forca = (sol - 1) / (this.config.solMax - 1 || 1);   // 0 a 1
+    const tam = 36 + 34 * forca;
     const cx = 645, cy = 95;
-    const corSol = lerpColor(color(255, 236, 110), color(255, 130, 50), t);
-    const corMiolo = lerpColor(color(255, 250, 175), color(255, 200, 110), t);
-    const raio = 8 + 8 * t;
+    const corSol = lerpColor(color(255, 236, 110), color(255, 130, 50), forca);
+    const corMiolo = lerpColor(color(255, 250, 175), color(255, 200, 110), forca);
+    const raio = 8 + 8 * forca;
 
     noStroke();
     fill(corSol);
@@ -550,9 +562,9 @@ class Jogo {
 
     // Tempo (fica vermelho nos últimos 10 segundos)
     textAlign(CENTER, CENTER);
-    const t = ceil(this.tempoRestante);
-    fill(t <= 10 ? color(255, 110, 110) : color(255));
-    text('Tempo: ' + t + ' s', width / 2, 21);
+    const segundos = ceil(this.tempoRestante);
+    fill(segundos <= 10 ? color(255, 110, 110) : color(255));
+    text('Tempo: ' + segundos + ' s', width / 2, 21);
 
     // Vidas em corações (cheios e vazios)
     const total = this.config.vidas;
@@ -561,6 +573,7 @@ class Jogo {
     }
   }
 
+  // Pequena gota azul que acompanha os litros recolhidos no HUD
   desenharGotaHUD(x, y) {
     noStroke();
     fill(70, 150, 255);
@@ -704,6 +717,7 @@ class Jogo {
 
   // ----- Ecrã de resultado -----
 
+  // Resultado: resumo da partida, dica de poupança e botões para repetir ou voltar ao menu
   desenharResultado() {
     this.desenharCenarioSeca();
     this.desenharPainel(110, 30, 580, 515);
@@ -773,17 +787,20 @@ class Jogo {
 
   // ---------- Auxiliares ----------
 
+  // Nome da dificuldade escolhida, como aparece nos botões (FÁCIL, NORMAL, DIFÍCIL)
   nomeDificuldade() {
     const b = this.botoesDificuldade.find(x => x.id === this.dificuldade);
     return b ? b.texto : '';
   }
 
+  // True se o ponto (px, py) está dentro do botão b
   dentro(px, py, b) {
     return px >= b.x && px <= b.x + b.w && py >= b.y && py <= b.y + b.h;
   }
 
   // ---------- Eventos ----------
 
+  // Clique do rato: escolhe a dificuldade, começa o jogo ou usa os botões do resultado
   clicar() {
     if (this.estado === 'inicio') {
       for (const b of this.botoesDificuldade) {
@@ -801,6 +818,8 @@ class Jogo {
     }
   }
 
+  // Teclas: 1/2/3 escolhem a dificuldade e ENTER começa; no resultado, ENTER ou R repete
+  // e ESC ou M volta ao menu
   teclar(tecla) {
     if (this.estado === 'inicio') {
       if (tecla === '1') this.dificuldade = 'facil';
