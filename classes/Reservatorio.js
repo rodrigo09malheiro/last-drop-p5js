@@ -84,11 +84,11 @@ class Reservatorio {
     fill(185, 140, 90);
     for (let ty = y + 24; ty < y + h; ty += 24) rect(x, ty, w, 2);
 
-    // Telhado (mesma cor e forma das casas) e chaminé do vapor
+    // Telhado em pixel art (mesma cor das casas) e chaminé do vapor
     fill(90, 55, 30);
     rect(x + w - 20, y - 38, 10, 20);
     fill(160, 70, 45);
-    triangle(x - 6, y, x + w / 2, y - 50, x + w + 6, y);
+    desenharTelhado(x, y, w, 50);
 
     // Moldura da janela (pisca quando está cheio ou vazio)
     if ((cheio || vazio) && pisca) {

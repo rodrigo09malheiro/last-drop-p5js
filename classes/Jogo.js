@@ -80,6 +80,26 @@ const DICAS = [
   { tema: 'geral', texto: 'Num autoclismo com dupla descarga, usa a descarga pequena sempre que possível.' }
 ];
 
+// Telhado em pixel art: feito com degraus de quadrados (em vez de triangle()).
+// Usado pelas casas da aldeia (Jogo) e pelo reservatório (Reservatorio).
+//   (x, y)  -> canto superior esquerdo da parede
+//   w       -> largura da parede
+//   altura  -> altura do telhado
+//   beiral  -> quanto o telhado sai para cada lado da parede
+//   px      -> tamanho de cada "píxel" do degrau
+// A cor define-se antes de chamar, com fill().
+function desenharTelhado(x, y, w, altura, beiral = 6, px = 4) {
+  const total = w + beiral * 2;                   // largura do telhado na base
+  const linhas = max(2, round(altura / px));      // número de degraus
+  const passo = total / 2 / linhas;               // avanço horizontal por linha
+  for (let i = 0; i < linhas; i++) {
+    const recuo = round((i * passo) / px) * px;   // alinhado à grelha de píxeis
+    const largura = total - recuo * 2;
+    if (largura <= 0) break;
+    rect(x - beiral + recuo, y - (i + 1) * px, largura, px);
+  }
+}
+
 class Jogo {
   constructor() {
     // Estados possíveis: 'inicio', 'execucao', 'resultado'
@@ -355,7 +375,7 @@ class Jogo {
     fill(205, 160, 105);
     rect(x, y, w, h);
     fill(160, 70, 45);
-    triangle(x - 6, y, x + w / 2, y - h * 0.45, x + w + 6, y);
+    desenharTelhado(x, y, w, h * 0.45);
     fill(90, 55, 30);
     rect(x + w / 2 - 8, y + h - 28, 16, 28);
     fill(120, 90, 60);
